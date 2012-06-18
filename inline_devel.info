@@ -1,0 +1,7 @@
+name = Devel inline
+description = Inline php editor.
+package = Development
+core = 7.x
+
+tags[] = developer
+dependencies[] = devel
