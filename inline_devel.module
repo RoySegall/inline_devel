@@ -16,7 +16,9 @@ function inline_devel_menu() {
 
 
 function inline_devel_php_functions($text) {
-  drupal_json_output(explode(' ', $text));
+  $functions = inline_devel_get_relevent_functions($text);
+
+  drupal_json_output($functions);
 }
 
 /**
@@ -25,9 +27,28 @@ function inline_devel_php_functions($text) {
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
 
   // Add the js file.
-  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
+  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/addons/inline_devel.js';
+  $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/addons/inline_devel.css';
 
   // Add div benieth the form
   $form['execute']['code']['#description'] = "<div class='suggestion' id='suggestion'></div>" . $form['execute']['code']['#description'];
 }
 
+/**
+ * Return the function name that start with the argument.
+ */
+function inline_devel_get_relevent_functions($funcion_name) {
+  $funcion_name = end(explode(' ', $funcion_name));
+
+  $functions = get_defined_functions();
+  $functions = array_merge($functions['internal'], $functions['user']);
+
+  $output_functions = array('0' => '...');
+  foreach ($functions as $function) {
+    if (strpos($function, $funcion_name) === 0) {
+      $output_functions[] = $function;
+    }
+  }
+
+  return $output_functions;
+}
