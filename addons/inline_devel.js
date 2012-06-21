@@ -35,9 +35,9 @@ Drupal.behaviors.functionLoad = {
         }
       }
 
-     var selectedDiv = $("#suggestion .selected-function").html();
-      if (keyNumber == 13 && selectedDiv) {
-        textarea.val(selectedDiv);
+     var selectedDiv = $("#suggestion .selected-function");
+      if (keyNumber == 13 && selectedDiv.html()) {
+        textarea.val(selectedDiv.attr('name'));
         functionsName.hide();
         return;
       }
@@ -54,7 +54,9 @@ Drupal.behaviors.functionLoad = {
       }
 
       // Start checking from the server the availble functions name.
-      $.getJSON('php/inline_devel/' + textarea.val(), function(data) {
+      var keyword = textarea.val().split("\n").slice(-1)[0].split(" ").slice(-1)[0];
+
+      $.getJSON('php/inline_devel/' + keyword, function(data) {
         var items = [];
         haveFunction = true;
         currentFunction = 0;
@@ -69,7 +71,7 @@ Drupal.behaviors.functionLoad = {
 
         // Build the array of function to divs.
         $.each(data, function(key, val) {
-          items.push("<div id='function-" + key + "' class='function' onclick='addMe(\"function-" + key + "\");'>" + val + '</div>');
+          items.push("<div class='function' name='"+ val.name + "'>" + val.name + ' (' + val.type + ')</div>');
         });
 
         // Insert the html.

@@ -41,12 +41,20 @@ function inline_devel_get_relevent_functions($funcion_name) {
   $funcion_name = end(explode(' ', $funcion_name));
 
   $functions = get_defined_functions();
-  $functions = array_merge($functions['internal'], $functions['user']);
 
-  $output_functions = array('0' => '...');
-  foreach ($functions as $function) {
-    if (strpos($function, $funcion_name) === 0) {
-      $output_functions[] = $function;
+  $scope = array(
+    'function' => array_merge(array_merge($functions['internal'], $functions['user'])),
+    'class' => get_declared_classes(),
+    'interface' => get_declared_interfaces(),
+  );
+
+  $output_functions = array();
+
+  foreach ($scope as $type => $functions) {
+    foreach ($functions as $function) {
+      if (strpos(strtolower($function), strtolower($funcion_name)) === 0) {
+        $output_functions[] = array('name' => $function, 'type' => $type);
+      }
     }
   }
 
