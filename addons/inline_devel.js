@@ -1,3 +1,38 @@
+/**
+ * Get last the word we watching now. Will be implemented in the next way:
+ * from the current marker in the text area until a white space or a new row.
+ */
+function inline_devel_get_last_word(element_id) {
+  var elem = document.getElementById(""+ element_id + "");
+
+  var cursor = elem.selectionStart;
+  var value = (jQuery)("#" + element_id).val();
+
+  var strlen = value.length;
+  var word = '';
+  for (var i = 0; i <= value.length; i++) {
+    var chr = value.charAt((cursor-1)-i);
+
+    if (chr == ' ' || chr == '(' || chr == "\n") {
+      break;
+    }
+
+    word += chr;
+  }
+
+  console.log(word.split("").reverse().join(""));
+}
+
+/**
+ * Inserting a functin/class/interface name propperyly in the next way:
+ *
+ * From the current marker in the textarea, delete amount of charecter acording
+ * to the last word charecter number.
+ */
+function inline_devel_insert_element_propperly() {
+// later.
+}
+
 (function ($) {
 
 
@@ -63,11 +98,6 @@ Drupal.behaviors.functionLoad = {
 
         // Show the functions name area and add class.
         functionsName.show().addClass('bordered');
-
-        // There is only '...' available? hide the suggestion list.
-        if (data.length == 1) {
-          functionsName.hide();
-        }
 
         // Build the array of function to divs.
         $.each(data, function(key, val) {
