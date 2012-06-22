@@ -1,26 +1,51 @@
 /**
- * Get last the word we watching now. Will be implemented in the next way:
- * from the current marker in the text area until a white space or a new row.
+ * Return data about the text area we manipulating.
  */
-function inline_devel_get_last_word(element_id) {
+function _inline_devel_textarea_helper(element_id) {
   var elem = document.getElementById(""+ element_id + "");
 
   var cursor = elem.selectionStart;
   var value = (jQuery)("#" + element_id).val();
 
+  return data = {
+    cursor: cursor,
+    value: value,
+    elem: elem
+  };
+}
+
+/**
+ * Get last the word we watching now. Will be implemented in the next way:
+ * from the current marker in the text area until a white space or a new row.
+ *
+ *  @param element_id
+ *    The dom element id.
+ */
+function inline_devel_get_last_word(element_id) {
+  // Define vars.
+  var data = _inline_devel_textarea_helper(element_id);
+  var elem = data.elem;
+  var cursor = data.cursor;
+  var value = data.value;
   var strlen = value.length;
   var word = '';
+
+  // Start with the scripting.
   for (var i = 0; i <= value.length; i++) {
     var chr = value.charAt((cursor-1)-i);
 
-    if (chr == ' ' || chr == '(' || chr == "\n") {
+    // List of chars that after them a noraml person is typing a new function name.
+    if (chr == ' ' || chr == '(' || chr == ')' || chr == ';' || chr == "\n" || chr == '\t' || chr == '\r') {
       break;
     }
 
     word += chr;
   }
 
-  console.log(word.split("").reverse().join(""));
+  // I got a flip word, let's flip again.
+  word = word.split("").reverse().join("");
+
+  return word;
 }
 
 /**
@@ -28,9 +53,18 @@ function inline_devel_get_last_word(element_id) {
  *
  * From the current marker in the textarea, delete amount of charecter acording
  * to the last word charecter number.
+ *
+ *  @param element_id
+ *    The dom element id.
+ *
+ *  @param last_word
+ *    The last word that we are standing on.
+ *
+ *  @param word
+ *    The word we need to insert.
  */
-function inline_devel_insert_element_propperly() {
-// later.
+function inline_devel_insert_element_propperly(element_id, last_word, word) {
+  var data = _inline_devel_textarea_helper();
 }
 
 (function ($) {
@@ -89,7 +123,7 @@ Drupal.behaviors.functionLoad = {
       }
 
       // Start checking from the server the availble functions name.
-      var keyword = textarea.val().split("\n").slice(-1)[0].split(" ").slice(-1)[0];
+      var keyword = inline_devel_get_last_word('edit-code');
 
       $.getJSON('php/inline_devel/' + keyword, function(data) {
         var items = [];
