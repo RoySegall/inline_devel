@@ -63,24 +63,35 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
  * Get list of hooks.
  */
 function inline_devel_get_list_of_hooks() {
-  $modules = inline_devel_get_modules();
-  $hooks = array();
+  static $hooks;
 
-  foreach ($modules as $module) {
-    $file = @file_get_contents($module);
-
-    if (!$file) {
-      continue;
+  if (!isset($hooks)) {
+    if (($cache = cache_get('inline_devel')) && !empty($cache->data)) {
+      $hooks = unserialize($cache->data);
     }
+    else {
+      // Caching data.
+      $modules = inline_devel_get_modules();
 
-    if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
-      continue;
-    }
+      foreach ($modules as $module) {
+        $file = @file_get_contents($module);
 
-    foreach ($arr[1] as $hook) {
-      if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
-        $hooks[] = "hook_" . $name;
+        if (!$file) {
+          continue;
+        }
+
+        if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
+          continue;
+        }
+
+        foreach ($arr[1] as $hook) {
+          if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+            $hooks[] = "hook_" . $name;
+          }
+        }
       }
+
+      cache_set('inline_devel', 'cache', serialize($hooks));
     }
   }
 
