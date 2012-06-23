@@ -130,34 +130,47 @@ Drupal.behaviors.functionLoad = {
 
       var keyNumber = keyPressed.which;
       var selectedDiv = $("#suggestion .selected-function");
+      var availableFunctionNumber = $("#suggestion div.function").length;
 
       inline_devel_get_last_word('edit-code', keyNumber);
 
       // The functions is revealed to the user. When scroling down with the
       // keyboard need to keep the the courser in the same place for replacing
-      // words propperly. Work in progress.
-      if ((keyNumber == 38 || keyNumber == 40) && $("#suggestion div").length > 0) {
+      // words propperly.
+      if ((keyNumber == 38 || keyNumber == 40) && availableFunctionNumber > 0) {
         keyPressed.preventDefault();
       }
-
-      log($("#suggestion").html());
 
       if ((keyNumber >= 38 || keyNumber.which <= 40)) {
         if (keyNumber == 38) {
             $("#suggestion .function").removeClass('selected-function');
             $("#suggestion .function:nth-child(" + (currentFunction - 1) + ")").addClass('selected-function');
+
+          // Boundaries of the scope.
+          if (currentFunction <= 2) {
+            currentFunction = 0;
+          }
+          else {
             currentFunction--;
+          }
         }
         else {
           $("#suggestion .function").removeClass('selected-function');
           $("#suggestion .function:nth-child(" + (currentFunction + 1) + ")").addClass('selected-function');
-          currentFunction++;
+
+          // Boundaries of the scope.
+          if (currentFunction > availableFunctionNumber) {
+            currentFunction = 0;
+          }
+          else {
+            currentFunction++;
+          }
         }
       }
 
       // Check if we have only one functoin - if so, when clicking enter the funcction
       // will throw to the function.
-      if ($("#suggestion div").length == 1) {
+      if (availableFunctionNumber == 1) {
         var divElement = $("#suggestion div");
       }
       else {
