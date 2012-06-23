@@ -8,21 +8,6 @@ function inline_devel_init() {
 }
 
 /**
- * Return list of modules path.
- */
-function inline_devel_get_modules() {
-  foreach (module_list() as $module) {
-    $modules[] = drupal_get_path('module', $module) . '/' . $module .'.module';
-  }
-
-  $modules = array_unique($modules);
-
-  sort($modules);
-
-  return $modules;
-}
-
-/**
  * Implements hook_menu().
  */
 function inline_devel_menu() {
@@ -65,37 +50,50 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
 function inline_devel_get_list_of_hooks() {
   static $hooks;
 
-  if (!isset($hooks)) {
-    if (($cache = cache_get('inline_devel')) && !empty($cache->data)) {
-      $hooks = unserialize($cache->data);
-    }
-    else {
-      // Caching data.
-      $modules = inline_devel_get_modules();
+  if (($cache = cache_get('inline_devel')) && !empty($cache->data)) {
+    $hooks = unserialize($cache->data);
+  }
+  else {
+  // Caching data.
+    $modules = inline_devel_get_modules();
 
-      foreach ($modules as $module) {
-        $file = @file_get_contents($module);
+    foreach ($modules as $module) {
+      $file = @file_get_contents($module);
 
-        if (!$file) {
-          continue;
-        }
-
-        if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
-          continue;
-        }
-
-        foreach ($arr[1] as $hook) {
-          if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
-            $hooks[] = "hook_" . $name;
-          }
-        }
+      if (!$file) {
+        continue;
       }
 
-      cache_set('inline_devel', 'cache', serialize($hooks));
+      if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
+        continue;
+      }
+
+      foreach ($arr[1] as $hook) {
+        if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+          $hooks[] = "hook_" . $name;
+        }
+      }
     }
+
+    cache_set('inline_devel', 'cache', serialize($hooks));
   }
 
   return $hooks;
+}
+
+/**
+ * Return list of modules path.
+ */
+function inline_devel_get_modules() {
+  foreach (module_list() as $module) {
+    $modules[] = drupal_get_path('module', $module) . '/' . $module .'.module';
+  }
+
+  $modules = array_unique($modules);
+
+  sort($modules);
+
+  return $modules;
 }
 
 /**
