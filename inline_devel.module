@@ -1,8 +1,33 @@
 <?php
 
-function inline_devel_menu() {
+/**
+ * Implements hook_init().
+ * For debugging, and more stuff.
+ */
+function inline_devel_init() {
+}
 
+/**
+ * Return list of modules path.
+ */
+function inline_devel_get_modules() {
+  foreach (module_list() as $module) {
+    $modules[] = drupal_get_path('module', $module) . '/' . $module .'.module';
+  }
+
+  $modules = array_unique($modules);
+
+  sort($modules);
+
+  return $modules;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function inline_devel_menu() {
   $items = array();
+
   $items['devel/php/inline_devel/%'] = array(
     'page callback' => 'inline_devel_php_functions',
     'page arguments' => array(3),
@@ -10,11 +35,12 @@ function inline_devel_menu() {
     'type' => MENU_CALLBACK,
   );
 
-
   return $items;
 }
 
-
+/**
+ * Menu callback - Print out json format with the name of the functions.
+ */
 function inline_devel_php_functions($text) {
   $functions = inline_devel_get_relevent_functions($text);
 
@@ -25,13 +51,40 @@ function inline_devel_php_functions($text) {
  * Implements hook_form_FORM_ID_alter().
  */
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
-
-  // Add the js file.
+  // Add the js and css file.
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/addons/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/addons/inline_devel.css';
 
   // Add div benieth the form
   $form['execute']['code']['#description'] = "<div class='suggestion' id='suggestion'></div>" . $form['execute']['code']['#description'];
+}
+
+/**
+ * Get list of hooks.
+ */
+function inline_devel_get_list_of_hooks() {
+  $modules = inline_devel_get_modules();
+  $hooks = array();
+
+  foreach ($modules as $module) {
+    $file = @file_get_contents($module);
+
+    if (!$file) {
+      continue;
+    }
+
+    if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
+      continue;
+    }
+
+    foreach ($arr[1] as $hook) {
+      if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+        $hooks[] = "hook_" . $name;
+      }
+    }
+  }
+
+  return $hooks;
 }
 
 /**
@@ -46,6 +99,7 @@ function inline_devel_get_relevent_functions($funcion_name) {
     'function' => array_merge(array_merge($functions['internal'], $functions['user'])),
     'class' => get_declared_classes(),
     'interface' => get_declared_interfaces(),
+    'hooks' => inline_devel_get_list_of_hooks(),
   );
 
   $output_functions = array();
