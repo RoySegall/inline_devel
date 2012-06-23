@@ -109,7 +109,7 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  (jQuery)("#" + element_id).val(data.value.slice(0, start) + word + "();" + data.value.slice(end));
+  (jQuery)("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
 }
 
 (function ($) {
@@ -123,7 +123,7 @@ Drupal.behaviors.functionLoad = {
     var functionsName = $("#suggestion");
     var haveFunction = false;
     var prevSearch = '';
-    var currentFunction = 1;
+    var currentFunction = 0;
 
     // Each key press.
     textarea.keydown(function(keyPressed) {
@@ -136,15 +136,13 @@ Drupal.behaviors.functionLoad = {
       // The functions is revealed to the user. When scroling down with the
       // keyboard need to keep the the courser in the same place for replacing
       // words propperly. Work in progress.
-      if ((keyNumber == 38 || keyNumber.which == 40) && selectedDiv.html()) {
+      if ((keyNumber == 38 || keyNumber == 40) && $("#suggestion div").length > 0) {
         keyPressed.preventDefault();
       }
 
-      if ((keyNumber >= 38 || keyNumber.which <= 40)) {
-        if (currentFunction < 1) {
-          currentFunction = 1;
-        }
+      log($("#suggestion").html());
 
+      if ((keyNumber >= 38 || keyNumber.which <= 40)) {
         if (keyNumber == 38) {
             $("#suggestion .function").removeClass('selected-function');
             $("#suggestion .function:nth-child(" + (currentFunction - 1) + ")").addClass('selected-function');
@@ -157,17 +155,30 @@ Drupal.behaviors.functionLoad = {
         }
       }
 
-      if (keyNumber == 13 && selectedDiv.html()) {
+      // Check if we have only one functoin - if so, when clicking enter the funcction
+      // will throw to the function.
+      if ($("#suggestion div").length == 1) {
+        var divElement = $("#suggestion div");
+      }
+      else {
+        var divElement = selectedDiv;
+      }
+
+      if (keyNumber == 13 && divElement.html()) {
+
         // Insert data propperly.
-        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), selectedDiv.attr('name'));
+        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement.attr('name'));
 
         // Don't break row.
+        keyPressed.preventDefault();
         $("#suggestion .function").removeClass('selected-function');
 
+        functionsName.html('');
         functionsName.hide();
         return;
       }
 
+      // When browsing in function, don't continue to the next steps.
       if (prevSearch == textarea.val()) {
         return;
       }
