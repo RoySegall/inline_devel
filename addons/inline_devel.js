@@ -4,7 +4,7 @@
 function _inline_devel_textarea_helper(element_id) {
   var elem = document.getElementById(""+ element_id + "");
 
-  var cursor = elem.selectionStart;
+  var cursor = elem.selectionEnd;
   var value = (jQuery)("#" + element_id).val();
 
   return data = {
@@ -22,42 +22,70 @@ function log(word) {
 }
 
 /**
+ * Check for speical chars that can split sentence for words.
+ */
+function inline_devel_speical_chars(chr) {
+  if (chr == '' || chr == ' ' || chr == '(' || chr == ')' || chr == ';' || chr == "\n" || chr == "\t" || chr == "\r") {
+    return true;
+  }
+  else {
+    return false;
+  }
+}
+
+/**
  * Get last the word we watching now. Will be implemented in the next way:
  * from the current marker in the text area until a white space or a new row.
  *
  *  @param element_id
  *    The dom element id.
  */
-function inline_devel_get_last_word(element_id) {
+function inline_devel_get_last_word(element_id, keyNumber) {
   // Define vars.
   var data = _inline_devel_textarea_helper(element_id);
 
-    var elem = document.getElementById(""+ element_id + "");
-
-  var cursor = elem.selectionEnd;
-  var value = jQuery("#" + element_id).val();
-
-  var strlen = value.length;
+  var elem = data.elem;
+  var cursor = data.cursor;
+  var value = data.value;
+  var key_start = key_end = 0;
   var word = '';
 
+  // Get the key the string start in.
+  for (var i = cursor; i <= value.length; i++) {
+    var chr = value.charAt(i+1);
 
-  // Start with the scripting.
-  for (var i = 0; i <= value.length; i++) {
-    var chr = value.charAt((cursor-1)-i);
-
-    // List of chars that after them a noraml person is typing a new function name.
-    if (chr == ' ' || chr == '(' || chr == ')' || chr == ';' || chr == "\n" || chr == '\t' || chr == '\r') {
-      continue;
+    if (inline_devel_speical_chars(chr)) {
+      key_end = i;
+      break;
     }
-
-    word += chr;
   }
 
-  // We got a empth word, go back in the cahrs until we find a char and build a
-  // new last word. First - find out the index that hold the a char.
+  // Get the string that the string end in.
+  for (var i = cursor; i >= 0; i--) {
+    var chr = value.charAt(i-1);
 
-  // I got a flip word, let's flip again.
-  return word.split("").reverse().join("");
+    if (inline_devel_speical_chars(chr)) {
+      key_start = i;
+      break;
+    }
+  }
+
+  // Building string, the function substr wasn't worked here.
+  for (i = key_start; i <= key_end; i++) {
+    word += value.charAt(i);
+  }
+
+  // Check if the word we got contain white species. If so need to check
+  if (word.indexOf(" ") != -1) {
+    // Check the direction of the cursor - depends on it, we decide whick key
+    // the return.
+    var key = keyNumber == 39 ? 1 : 0;
+
+    return word.split(" ")[key];
+  }
+
+  // Return the current word.
+  return word;
 }
 
 /**
@@ -81,7 +109,7 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  (jQuery)("#" + element_id).val(data.value.slice(0, start) + word + data.value.slice(end));
+  (jQuery)("#" + element_id).val(data.value.slice(0, start) + word + "();" + data.value.slice(end));
 }
 
 (function ($) {
@@ -101,17 +129,18 @@ Drupal.behaviors.functionLoad = {
     textarea.keydown(function(keyPressed) {
 
       var keyNumber = keyPressed.which;
-      var selectedDiv = $("#suggestion");
+      var selectedDiv = $("#suggestion .selected-function");
+
+      inline_devel_get_last_word('edit-code', keyNumber);
 
       // The functions is revealed to the user. When scroling down with the
       // keyboard need to keep the the courser in the same place for replacing
       // words propperly. Work in progress.
       if ((keyNumber == 38 || keyNumber.which == 40) && selectedDiv.html()) {
-        // keyPressed.preventDefault();
+        keyPressed.preventDefault();
       }
 
       if ((keyNumber >= 38 || keyNumber.which <= 40)) {
-
         if (currentFunction < 1) {
           currentFunction = 1;
         }
@@ -128,18 +157,13 @@ Drupal.behaviors.functionLoad = {
         }
       }
 
-      var data = _inline_devel_textarea_helper('edit-code');
-
       if (keyNumber == 13 && selectedDiv.html()) {
-
         // Insert data propperly.
-        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), selectedDiv.find('.selected-function').attr('name'));
+        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), selectedDiv.attr('name'));
 
         // Don't break row.
-        keyPressed.preventDefault();
         $("#suggestion .function").removeClass('selected-function');
 
-        // textarea.val(selectedDiv.attr('name'));
         functionsName.hide();
         return;
       }
