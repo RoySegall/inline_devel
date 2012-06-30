@@ -1,3 +1,5 @@
+(function ($) {
+
 /**
  * Return data about the text area we manipulating.
  */
@@ -5,7 +7,7 @@ function _inline_devel_textarea_helper(element_id) {
   var elem = document.getElementById(""+ element_id + "");
 
   var cursor = elem.selectionEnd;
-  var value = (jQuery)("#" + element_id).val();
+  var value = $("#" + element_id).val();
 
   return data = {
     cursor: cursor,
@@ -109,10 +111,8 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  (jQuery)("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
+  $("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
 }
-
-(function ($) {
 
 // Placeholders link in query log.
 Drupal.behaviors.functionLoad = {

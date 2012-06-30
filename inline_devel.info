@@ -5,3 +5,4 @@ core = 7.x
 
 tags[] = developer
 dependencies[] = devel
+dependencies[] = inline_devel_dummy_module

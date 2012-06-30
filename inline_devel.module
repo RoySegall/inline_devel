@@ -5,6 +5,29 @@
  * For debugging, and more stuff.
  */
 function inline_devel_init() {
+  // Check if we need to flush the hooks cache when a hook removed/declared.
+  if (!isset($_SESSION['function'])) {
+    $_SESSION['function_number'] = 0;
+  }
+  else {
+    if (count($_SESSION['function']) != $_SESSION['function_number']) {
+      $_SESSION['function_number'] = count($_SESSION['function']);
+
+      // Flush all becuase there is a new functin in the stack.
+      drupal_flush_all_caches();
+    }
+  }
+
+  // Building declared function in each page callback.
+  if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
+    foreach ($_SESSION['function'] as $function) {
+     eval('
+        function ' . $function['function'] . '('. $function['arguments'] .') {
+          ' . $function['content'] . '
+        }
+      ');
+    }
+  }
 }
 
 /**
@@ -36,46 +59,83 @@ function inline_devel_php_functions($text) {
  * Implements hook_form_FORM_ID_alter().
  */
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
+
   // Add the js and css file.
-  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/addons/inline_devel.js';
-  $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/addons/inline_devel.css';
+  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
+  $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 
   // Add div benieth the form
   $form['execute']['code']['#description'] = "<div class='suggestion' id='suggestion'></div>" . $form['execute']['code']['#description'];
+
+  // Verify we don't declare the same function.
+  $form['#validate'][] = 'inline_devel_prevent_redeclare';
+
+  // Adding function that check if you a user entered a hook.
+  $form['#submit'] = array('inline_devel_form_submit_register_hook') + $form['#submit'];
+}
+
+/**
+ * Validate function to prevent redeclare the same function name.
+ */
+function inline_devel_prevent_redeclare(&$form, $form_state) {
+  if (empty($form_state['values']['code'])) {
+    return;
+  }
+
+  $functions = inline_devel_php_parsing($form_state['values']['code']);
+
+  // Remove the function from the textarea.
+  $form_state['values']['code'] = str_replace($functions[0], "", $form_state['values']['code']);
+
+  if (isset($_SESSION['function'][$functions[1]])) {
+    unset($_SESSION['function'][$functions[1]]);
+  }
+}
+
+/**
+ * Custom submit handler: register hook in the hooks_sessions.
+ */
+function inline_devel_form_submit_register_hook(&$form, &$form_state) {
+  if (empty($form_state['values']['code'])) {
+    return;
+  }
+
+  $functions = inline_devel_php_parsing($form_state['values']['code']);
+
+  // Change the hook prefix name.
+  inline_devel_change_hook_prefix($functions[1]);
+
+  $_SESSION['function'][$functions[1]] = array(
+    'function' => $functions[1],
+    'arguments' => $functions[2],
+    'content' => $functions[3]
+  );
 }
 
 /**
  * Get list of hooks.
  */
 function inline_devel_get_list_of_hooks() {
-  static $hooks;
+  // TODO: caching the data.
+  $modules = inline_devel_get_modules();
 
-  if (($cache = cache_get('inline_devel')) && !empty($cache->data)) {
-    $hooks = unserialize($cache->data);
-  }
-  else {
-  // Caching data.
-    $modules = inline_devel_get_modules();
+  foreach ($modules as $name => $file) {
+    // Start processing.
+    $file = @file_get_contents($file);
 
-    foreach ($modules as $module) {
-      $file = @file_get_contents($module);
-
-      if (!$file) {
-        continue;
-      }
-
-      if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
-        continue;
-      }
-
-      foreach ($arr[1] as $hook) {
-        if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
-          $hooks[] = "hook_" . $name;
-        }
-      }
+    if (!$file) {
+      continue;
     }
 
-    cache_set('inline_devel', 'cache', serialize($hooks));
+    if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
+      continue;
+    }
+
+    foreach ($arr[1] as $hook) {
+      if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+        $hooks[] = "hook_" . $name;
+      }
+    }
   }
 
   return $hooks;
@@ -86,12 +146,8 @@ function inline_devel_get_list_of_hooks() {
  */
 function inline_devel_get_modules() {
   foreach (module_list() as $module) {
-    $modules[] = drupal_get_path('module', $module) . '/' . $module .'.module';
+    $modules[$module] = drupal_get_path('module', $module) . '/' . $module .'.module';
   }
-
-  $modules = array_unique($modules);
-
-  sort($modules);
 
   return $modules;
 }
@@ -122,4 +178,22 @@ function inline_devel_get_relevent_functions($funcion_name) {
   }
 
   return $output_functions;
+}
+
+/**
+ * Use regex to tear down functions.
+ *
+ * TODO: for now, the regex recognize only one function at a time, need a way to
+ * recognize all functions.
+ */
+function inline_devel_php_parsing($code) {
+  preg_match("/function.+?([a-zA-Z0-9_]+?)[\s]*\((.*?)\)[\s]*\{(.+)\}/is", $code, $functions);
+  return array_map("trim", $functions);
+}
+
+/**
+ * Rename hook to the inline_devel_dummy_module
+ */
+function inline_devel_change_hook_prefix(&$text) {
+  $text = str_replace("hook", "inline_devel_dummy_module", $text);
 }

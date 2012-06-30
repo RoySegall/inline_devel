@@ -1,0 +1,7 @@
+name = Devel inline dummy module.
+description = A dummy module for temporary hooks.
+package = Development
+core = 7.x
+
+tags[] = developer
+dependencies[] = devel
