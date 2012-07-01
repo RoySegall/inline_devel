@@ -1,4 +1,7 @@
 (function ($) {
+//-----------------------------------------------
+//  API area
+//-----------------------------------------------
 
 /**
  * Return data about the text area we manipulating.
@@ -17,14 +20,14 @@ function _inline_devel_textarea_helper(element_id) {
 }
 
 /**
- * Short functio name that will print console.log.
+ * Short function name that will print console.log.
  */
 function log(word) {
   console.log(word);
 }
 
 /**
- * Check for speical chars that can split sentence for words.
+ * Check for special chars that can split sentence for words.
  */
 function inline_devel_speical_chars(chr) {
   if (chr == '' || chr == ' ' || chr == '(' || chr == ')' || chr == ';' || chr == "\n" || chr == "\t" || chr == "\r") {
@@ -40,10 +43,10 @@ function inline_devel_speical_chars(chr) {
  * from the current marker in the text area until a white space or a new row.
  *
  *  @param element_id
- *    The dom element id.
+ *    The DOM element id.
  */
 function inline_devel_get_last_word(element_id, keyNumber) {
-  // Define vars.
+  // Define variables.
   var data = _inline_devel_textarea_helper(element_id);
 
   var elem = data.elem;
@@ -79,7 +82,7 @@ function inline_devel_get_last_word(element_id, keyNumber) {
 
   // Check if the word we got contain white species. If so need to check
   if (word.indexOf(" ") != -1) {
-    // Check the direction of the cursor - depends on it, we decide whick key
+    // Check the direction of the cursor - depends on it, we decide which key
     // the return.
     var key = keyNumber == 39 ? 1 : 0;
 
@@ -91,13 +94,13 @@ function inline_devel_get_last_word(element_id, keyNumber) {
 }
 
 /**
- * Inserting a functin/class/interface name propperyly in the next way:
+ * Inserting a function/class/interface name properly in the next way:
  *
- * From the current marker in the textarea, delete amount of charecter acording
- * to the last word charecter number.
+ * From the current marker in the textarea, delete amount of character according
+ * to the last word character number.
  *
  *  @param element_id
- *    The dom element id.
+ *    The DOM element id.
  *
  *  @param last_word
  *    The last word that we are standing on.
@@ -112,13 +115,19 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   var end = data.cursor;
 
   $("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
+
+  // Put the cursor in the after the string we put into the textarea.
+  data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 1;
 }
 
-// Placeholders link in query log.
+//-----------------------------------------------
+//  Events handling.
+//-----------------------------------------------
+
 Drupal.behaviors.functionLoad = {
   attach: function() {
 
-    // Save the elemnts to variables.
+    // Save the elements to variables.
     var textarea = $("#edit-code");
     var functionsName = $("#suggestion");
     var haveFunction = false;
@@ -134,17 +143,18 @@ Drupal.behaviors.functionLoad = {
 
       inline_devel_get_last_word('edit-code', keyNumber);
 
-      // The functions is revealed to the user. When scroling down with the
+      // The functions is revealed to the user. When scrolling down with the
       // keyboard need to keep the the courser in the same place for replacing
-      // words propperly.
+      // words properly.
       if ((keyNumber == 38 || keyNumber == 40) && availableFunctionNumber > 0) {
         keyPressed.preventDefault();
       }
 
       if ((keyNumber >= 38 || keyNumber.which <= 40)) {
+        currentFunction = $("#suggestion .selected-function").index();
         if (keyNumber == 38) {
             $("#suggestion .function").removeClass('selected-function');
-            $("#suggestion .function:nth-child(" + (currentFunction - 1) + ")").addClass('selected-function');
+            $("#suggestion .function:nth-child(" + (currentFunction) + ")").addClass('selected-function');
 
           // Boundaries of the scope.
           if (currentFunction <= 2) {
@@ -156,7 +166,7 @@ Drupal.behaviors.functionLoad = {
         }
         else {
           $("#suggestion .function").removeClass('selected-function');
-          $("#suggestion .function:nth-child(" + (currentFunction + 1) + ")").addClass('selected-function');
+          $("#suggestion .function:nth-child(" + (currentFunction + 2) + ")").addClass('selected-function');
 
           // Boundaries of the scope.
           if (currentFunction > availableFunctionNumber) {
@@ -168,7 +178,7 @@ Drupal.behaviors.functionLoad = {
         }
       }
 
-      // Check if we have only one functoin - if so, when clicking enter the funcction
+      // Check if we have only one function - if so, when clicking enter the function
       // will throw to the function.
       if (availableFunctionNumber == 1) {
         var divElement = $("#suggestion div");
@@ -179,7 +189,7 @@ Drupal.behaviors.functionLoad = {
 
       if (keyNumber == 13 && divElement.html()) {
 
-        // Insert data propperly.
+        // Insert data properly.
         inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement.attr('name'));
 
         // Don't break row.
@@ -196,17 +206,17 @@ Drupal.behaviors.functionLoad = {
         return;
       }
 
-      // Hide the functions name area becuase there is no text.
+      // Hide the functions name area because there is no text.
       if (textarea.val().length == 0) {
         functionsName.removeClass('bordered');
         functionsName.hide();
         return;
       }
 
-      // Start checking from the server the availble functions name.
+      // Start checking from the server the available functions name.
       var keyword = inline_devel_get_last_word('edit-code');
 
-      $.getJSON('php/inline_devel/' + keyword, function(data) {
+      $.getJSON('?q=devel/php/inline_devel/' + keyword, function(data) {
         var items = [];
         haveFunction = true;
         currentFunction = 0;
@@ -216,7 +226,7 @@ Drupal.behaviors.functionLoad = {
 
         // Build the array of function to divs.
         $.each(data, function(key, val) {
-          items.push("<div class='function' name='"+ val.name + "'>" + val.name + ' (' + val.type + ')</div>');
+          items.push("<div class='function' name='"+ val.name + "' id='" + val.id + "'>" + val.name + ' (' + val.type + ')</div>');
         });
 
         // Insert the html.
@@ -224,6 +234,44 @@ Drupal.behaviors.functionLoad = {
 
         prevSearch = textarea.val();
       });
+    });
+  }
+}
+
+/**
+ * Handling all sort of .live method.
+ *
+ * When use it? when doing a js functions on events that was added after page
+ * was loaded.
+ *
+ * I used it so i won't need to put inline js function like:
+ *   <tag onmouseover="functoin();">text</tag>
+ */
+Drupal.behaviors.liveEvents = {
+  attach: function() {
+
+    // Handling when clicking on function.
+    $("#suggestion .function").live("click", function(event) {
+      var id = (event).srcElement.id;
+      // Insert data propperly.
+      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id).attr('name'));
+
+      // Don't break row.
+      $("#suggestion .function").removeClass('selected-function');
+
+      $("#suggestion").html('');
+      $("#suggestion").hide();
+    });
+
+    // Handling when hovering above function.
+    $("#suggestion .function").live("hover", function(event) {
+      var id = (event).srcElement.id;
+      $("#suggestion .function").removeClass('selected-function');
+      $("#suggestion .function#" + id).addClass('selected-function');
+    });
+
+    $("#edit-code").live("keydown", function(event) {
+
     });
   }
 }

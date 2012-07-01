@@ -13,7 +13,6 @@
   padding: 10px;
 }
 
-.bordered div:hover,
 .selected-function {
   background: #e3f1f8;
   border: #adbac1 solid 1px;

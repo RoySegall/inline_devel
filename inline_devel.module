@@ -13,7 +13,7 @@ function inline_devel_init() {
     if (count($_SESSION['function']) != $_SESSION['function_number']) {
       $_SESSION['function_number'] = count($_SESSION['function']);
 
-      // Flush all becuase there is a new functin in the stack.
+      // Flush all because there is a new function in the stack.
       drupal_flush_all_caches();
     }
   }
@@ -47,7 +47,7 @@ function inline_devel_menu() {
 }
 
 /**
- * Menu callback - Print out json format with the name of the functions.
+ * Menu callback - Print out JSON format with the name of the functions.
  */
 function inline_devel_php_functions($text) {
   $functions = inline_devel_get_relevent_functions($text);
@@ -64,7 +64,7 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 
-  // Add div benieth the form
+  // Add div beneath the form
   $form['execute']['code']['#description'] = "<div class='suggestion' id='suggestion'></div>" . $form['execute']['code']['#description'];
 
   // Verify we don't declare the same function.
@@ -169,10 +169,11 @@ function inline_devel_get_relevent_functions($funcion_name) {
 
   $output_functions = array();
 
+  $i = 0;
   foreach ($scope as $type => $functions) {
     foreach ($functions as $function) {
       if (strpos(strtolower($function), strtolower($funcion_name)) === 0) {
-        $output_functions[] = array('name' => $function, 'type' => $type);
+        $output_functions[] = array('id' => $i++,  'name' => $function, 'type' => $type);
       }
     }
   }
@@ -181,9 +182,9 @@ function inline_devel_get_relevent_functions($funcion_name) {
 }
 
 /**
- * Use regex to tear down functions.
+ * Use REGEX to tear down functions.
  *
- * TODO: for now, the regex recognize only one function at a time, need a way to
+ * TODO: for now, the REGEX recognize only one function at a time, need a way to
  * recognize all functions.
  */
 function inline_devel_php_parsing($code) {
