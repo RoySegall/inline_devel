@@ -18,14 +18,13 @@ go to admin/config/development/inline_devel_admin and there you can delete the
 functions.
 
 Problem for beta:
-The regex pattern that detect functions from the form can detect only one function
-at a time. Also if there is a defined function and simple code after that - not
-work as well.
+1.  The regex pattern that detect functions from the form can detect only one
+    function at a time. Also if there is a defined function and simple code after
+    that - not work as well.
 
-Hooks are list is builted by searching the module_invoke_all() function in *.module
-files. There are also invoking function in the inc files. files that placed in the
-includes folder. One more thing - the caching for the hooks list need to be cached
-in DB and not in static cache.
+2.  Hooks are list is builted by searching the module_invoke_all() function in
+    *.module files. There are also invoking function in the inc files. files that
+    placed in the includes folder.
 
 
 Future ideas:
