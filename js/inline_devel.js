@@ -55,7 +55,7 @@ function inline_devel_get_last_word(element_id, keyNumber) {
   var key_start = key_end = 0;
   var word = '';
 
-  // Get the key the string start in.
+  // Get the string that the string end in.
   for (var i = cursor; i <= value.length; i++) {
     var chr = value.charAt(i+1);
 
@@ -65,7 +65,7 @@ function inline_devel_get_last_word(element_id, keyNumber) {
     }
   }
 
-  // Get the string that the string end in.
+  // Get the key the string start in.
   for (var i = cursor; i >= 0; i--) {
     var chr = value.charAt(i-1);
 
