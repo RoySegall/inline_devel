@@ -22,11 +22,6 @@ Problem for beta:
     function at a time. Also if there is a defined function and simple code after
     that - not work as well.
 
-2.  Hooks are list is builted by searching the module_invoke_all() function in
-    *.module files. There are also invoking function in the inc files. files that
-    placed in the includes folder.
-
-
 Future ideas:
 * All code written in the execute code form - will be saved. Good for when closing
 the window without notice.

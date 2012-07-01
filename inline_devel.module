@@ -6,31 +6,10 @@
  */
 function inline_devel_init() {
   // Check if we need to flush the hooks cache when a hook removed/declared.
-  if (!isset($_SESSION['function'])) {
-    $_SESSION['function_number'] = 0;
-  }
-  else {
-    if (count($_SESSION['function']) != $_SESSION['function_number']) {
-      $_SESSION['function_number'] = count($_SESSION['function']);
+  _inline_devel_clear_cache_when_needed();
 
-      // Flush all because there is a new function in the stack.
-      drupal_flush_all_caches();
-    }
-  }
-
-  if ($_SESSION['function_number'] == 0) {
-    return;
-  }
   // Building declared function in each page callback.
-  if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
-    foreach ($_SESSION['function'] as $function) {
-     eval('
-        function ' . $function['function'] . '('. $function['arguments'] .') {
-          ' . $function['content'] . '
-        }
-      ');
-    }
-  }
+  _inline_devel_run_sessioned_functions();
 }
 
 /**
@@ -62,7 +41,6 @@ function inline_devel_php_functions($text) {
  * Implements hook_form_FORM_ID_alter().
  */
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
-
   // Add the js and css file.
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
@@ -118,46 +96,76 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
     'arguments' => $functions[2],
     'content' => $functions[3]
   );
+
+  // Show message.
+  drupal_set_message(t('The function @function-name inserted successfully to the functions stack.', array(
+    '@function-name' => $functions[1]
+  )));
 }
 
 /**
  * Get list of hooks.
  */
 function inline_devel_get_list_of_hooks() {
+  $dirs = array('includes', 'modules', 'sites');
+  $files = array();
+  foreach ($dirs as $dir) {
+    inline_devel_get_all_files($dir, $files);
+  }
 
-  $modules = inline_devel_get_modules();
-
-  foreach ($modules as $name => $file) {
+  foreach ($files as $file) {
     // Start processing.
-    $file = @file_get_contents($file);
+    $content = @file_get_contents($file);
 
-    if (!$file) {
+    if (!$content) {
       continue;
     }
 
-    if(!preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $file, $arr)) {
-      continue;
+    if (preg_match_all("/module_invoke_all\((.*?), (.*?)\);/ismx", $content, $arr)) {
+      foreach ($arr[1] as $hook) {
+        if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+          $hooks[] = "hook_" . $name;
+        }
+      }
     }
 
-    foreach ($arr[1] as $hook) {
-      if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
-        $hooks[] = "hook_" . $name;
+    if (preg_match_all("/module_implements\('(.*?)'\)/ismx", $content, $arr)) {
+      foreach ($arr[1] as $hook) {
+        if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+          $hooks[] = "hook_" . $name;
+        }
       }
     }
   }
 
-  return $hooks;
+  return array_unique($hooks);
 }
 
 /**
- * Return list of modules path.
+ * Scan all the directory for inc files or modules files.
+ *
+ *  @param $dir
+ *    directory.
+ *
+ *  @param $files
+ *    An array contain all the files with the full path for file_get_contents().
  */
-function inline_devel_get_modules() {
-  foreach (module_list() as $module) {
-    $modules[$module] = drupal_get_path('module', $module) . '/' . $module .'.module';
-  }
+function inline_devel_get_all_files($dir, &$files_list = array()) {
+  $files = scandir($dir);
 
-  return $modules;
+  foreach($files as $file) {
+    if ($file != '.' && $file != '..') {
+      if (!is_dir($dir . '/' . $file)) {
+        $info = pathinfo(DRUPAL_ROOT . '/' . $dir .'/'. $file);
+        if (!empty($info['extension']) && in_array($info['extension'], array('module', 'inc'))) {
+          $files_list[] = ($dir .'/'. $file);
+        }
+      }
+      else {
+        inline_devel_get_all_files($dir .'/'. $file, $files_list);
+      }
+    }
+  }
 }
 
 /**
@@ -213,4 +221,39 @@ function inline_devel_php_parsing($code) {
  */
 function inline_devel_change_hook_prefix(&$text) {
   $text = str_replace("hook", "inline_devel_dummy_module", $text);
+}
+
+/**
+ * Check if there new functions in the stack and rebuild cache if needed.
+ */
+function _inline_devel_clear_cache_when_needed() {
+  if (!isset($_SESSION['function'])) {
+    $_SESSION['function_number'] = 0;
+  }
+  else {
+    if (count($_SESSION['function']) != $_SESSION['function_number']) {
+      $_SESSION['function_number'] = count($_SESSION['function']);
+
+      // Flush all because there is a new function in the stack.
+      drupal_flush_all_caches();
+    }
+  }
+}
+
+/**
+ * Build the functions in the stack.
+ */
+function _inline_devel_run_sessioned_functions() {
+  if ($_SESSION['function_number'] == 0) {
+    return;
+  }
+  if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
+    foreach ($_SESSION['function'] as $function) {
+     eval('
+        function ' . $function['function'] . '('. $function['arguments'] .') {
+          ' . $function['content'] . '
+        }
+      ');
+    }
+  }
 }
