@@ -1,0 +1,7 @@
+name = Devel inline UI
+description = Admin ui for devel inline.
+package = Development
+core = 7.x
+
+tags[] = developer
+dependencies[] = devel

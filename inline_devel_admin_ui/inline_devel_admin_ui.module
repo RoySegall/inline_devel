@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * Implement hook_menu().
+ */
+function inline_devel_admin_ui_menu() {
+  $items = array();
+
+  $items['admin/config/development/inline_devel_admin'] = array(
+    'page callback' => 'inline_devel_admin_ui_session_manage',
+    'title' => t('Temporary hooks'),
+    'description' => t('Manage here your defined hooks via the inline devel module'),
+    'access arguments' => array('access devel information'),
+  );
+
+  $items['admin/config/development/inline_devel_admin/delete_session/%'] = array(
+    'page callback' => 'inline_devel_admin_ui_session_delete',
+    'page arguments' => array(5),
+    'access arguments' => array('access devel information'),
+  );
+
+  return $items;
+}
+
+/**
+ * UI for delete the sessions.
+ */
+function inline_devel_admin_ui_session_manage() {
+
+  $content = t('Here you can manage your temporary function that were defined in the devel execute page.') . '<br /><br />';
+
+  $header = array(
+    t('Function name'),
+    t('Arguments'),
+    t('Content'),
+    t('Options')
+  );
+
+  if (empty($_SESSION['function'])) {
+    $rows[] = array(t('No predefined function were found.'), array('colspan' => count($header)));
+  }
+  else {
+    foreach ($_SESSION['function'] as $function) {
+      $rows[] = array(
+        $function['function'],
+        $function['arguments'],
+        $function['content'],
+        l(t('Delete'), 'admin/config/development/inline_devel_admin/delete_session/' . $function['function'])
+      );
+    }
+  }
+
+  $content .= theme('table', array('header' => $header, 'rows' => $rows));
+
+  return $content;
+}
+
+/**
+ * Delete the function session.
+ */
+function inline_devel_admin_ui_session_delete($name) {
+  unset($_SESSION['function'][$name]);
+
+  $args = array(
+    '@function-name' => $name
+  );
+
+  drupal_set_message(t('The function @function-name was removed from the session function list.', $args));
+
+  drupal_goto('admin/config/development/inline_devel_admin');
+}
+
