@@ -18,6 +18,9 @@ function inline_devel_init() {
     }
   }
 
+  if ($_SESSION['function_number'] == 0) {
+    return;
+  }
   // Building declared function in each page callback.
   if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
     foreach ($_SESSION['function'] as $function) {
@@ -71,21 +74,25 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['#validate'][] = 'inline_devel_prevent_redeclare';
 
   // Adding function that check if you a user entered a hook.
-  $form['#submit'] = array('inline_devel_form_submit_register_hook') + $form['#submit'];
+  $form['#submit'][] = 'inline_devel_form_submit_register_hook';
 }
 
 /**
  * Validate function to prevent redeclare the same function name.
  */
-function inline_devel_prevent_redeclare(&$form, $form_state) {
+function inline_devel_prevent_redeclare(&$form, &$form_state) {
   if (empty($form_state['values']['code'])) {
     return;
   }
 
   $functions = inline_devel_php_parsing($form_state['values']['code']);
 
+  if (empty($functions)) {
+    return;
+  }
+
   // Remove the function from the textarea.
-  $form_state['values']['code'] = str_replace($functions[0], "", $form_state['values']['code']);
+  // $form_state['values']['code'] = str_replace($functions[0], "", $form_state['values']['code']);
 
   if (isset($_SESSION['function'][$functions[1]])) {
     unset($_SESSION['function'][$functions[1]]);
@@ -101,6 +108,10 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
   }
 
   $functions = inline_devel_php_parsing($form_state['values']['code']);
+
+  if (empty($functions)) {
+    return;
+  }
 
   // Change the hook prefix name.
   inline_devel_change_hook_prefix($functions[1]);

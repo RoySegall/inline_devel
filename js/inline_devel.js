@@ -269,9 +269,17 @@ Drupal.behaviors.liveEvents = {
       $("#suggestion .function").removeClass('selected-function');
       $("#suggestion .function#" + id).addClass('selected-function');
     });
+  }
+}
 
-    $("#edit-code").live("keydown", function(event) {
+Drupal.behaviors.shortCuts = {
+  attach: function() {
 
+    $(document).keydown(function(event) {
+      if (event.ctrlKey && event.which == 83) {
+        $("#devel-execute-form").submit();
+        event.preventDefault();
+      }
     });
   }
 }
