@@ -147,10 +147,10 @@ function inline_devel_get_list_of_hooks() {
 /**
  * Scan all the directory for inc files or modules files.
  *
- * @param $dir
+ * @param string $dir
  *   The directory path that need to scan for files.
  *
- * @param $files_list
+ * @param array $files_list
  *   An array contain all the files with the full path for file_get_contents().
  */
 function inline_devel_get_all_files($dir, &$files_list) {
