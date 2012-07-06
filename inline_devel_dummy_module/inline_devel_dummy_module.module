@@ -1,4 +1,10 @@
 <?php
+/**
+ * @file inline_devel_dummy_module.module
+ *
+ * This is a file that related to the temporary hooks dummy module.
+ */
+
 
 /**
  * A dummy module for temporary hook definition.
