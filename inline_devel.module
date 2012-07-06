@@ -1,6 +1,6 @@
 <?php
 /**
- * @file inline_devel.module
+ * @file
  * The file for the inline_devel module.
  */
 
@@ -147,11 +147,11 @@ function inline_devel_get_list_of_hooks() {
 /**
  * Scan all the directory for inc files or modules files.
  *
- *  @param $dir
- *    directory.
+ * @param $dir
+ *   directory.
  *
- *  @param $files_list
- *    An array contain all the files with the full path for file_get_contents().
+ * @param &$files_list
+ *   An array contain all the files with the full path for file_get_contents().
  */
 function inline_devel_get_all_files($dir, &$files_list = array()) {
   $files = scandir($dir);
@@ -203,7 +203,7 @@ function inline_devel_get_relevent_functions($funcion_name) {
         $output_functions[] = array(
           'id' => $i++,
           'name' => $function,
-          'type' => $type
+          'type' => $type,
         );
       }
     }
@@ -256,7 +256,7 @@ function _inline_devel_run_sessioned_functions() {
   }
   if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
     foreach ($_SESSION['function'] as $function) {
-     eval('function ' . $function['function'] . '('. $function['arguments'] .') {
+      eval('function ' . $function['function'] . '(' . $function['arguments'] . ') {
         ' . $function['content'] . '
       }');
     }
