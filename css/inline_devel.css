@@ -3,10 +3,10 @@
 }
 
 .bordered {
-  font-size: 17px;
   background: #f5fcff;
   border: #4388ab solid 1px;
   color: #052535;
+  font-size: 17px;
 }
 
 .bordered div {
@@ -16,8 +16,8 @@
 .selected-function {
   background: #e3f1f8;
   border: #adbac1 solid 1px;
-  border-right: none;
   border-left: none;
-  padding-top: 9px;
+  border-right: none;
   padding-bottom: 9px;
+  padding-top: 9px;
 }

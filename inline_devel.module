@@ -1,8 +1,11 @@
 <?php
+/**
+ * @file
+ * The file for the inline_devel module.
+ */
 
 /**
  * Implements hook_init().
- * For debugging, and more stuff.
  */
 function inline_devel_init() {
   // Check if we need to flush the hooks cache when a hook removed/declared.
@@ -45,7 +48,7 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 
-  // Add div beneath the form
+  // Add div beneath the form.
   $form['execute']['code']['#description'] = "<div class='suggestion' id='suggestion'></div>" . $form['execute']['code']['#description'];
 
   // Verify we don't declare the same function.
@@ -94,12 +97,12 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
   $_SESSION['function'][$functions[1]] = array(
     'function' => $functions[1],
     'arguments' => $functions[2],
-    'content' => $functions[3]
+    'content' => $functions[3],
   );
 
   // Show message.
   drupal_set_message(t('The function @function-name inserted successfully to the functions stack.', array(
-    '@function-name' => $functions[1]
+    '@function-name' => $functions[1],
   )));
 }
 
@@ -144,25 +147,25 @@ function inline_devel_get_list_of_hooks() {
 /**
  * Scan all the directory for inc files or modules files.
  *
- *  @param $dir
- *    directory.
+ * @param string $dir
+ *   The directory path that need to scan for files.
  *
- *  @param $files
- *    An array contain all the files with the full path for file_get_contents().
+ * @param array $files_list
+ *   An array contain all the files with the full path for file_get_contents().
  */
-function inline_devel_get_all_files($dir, &$files_list = array()) {
+function inline_devel_get_all_files($dir, &$files_list) {
   $files = scandir($dir);
 
-  foreach($files as $file) {
+  foreach ($files as $file) {
     if ($file != '.' && $file != '..') {
       if (!is_dir($dir . '/' . $file)) {
-        $info = pathinfo(DRUPAL_ROOT . '/' . $dir .'/'. $file);
+        $info = pathinfo(DRUPAL_ROOT . '/' . $dir . '/' . $file);
         if (!empty($info['extension']) && in_array($info['extension'], array('module', 'inc'))) {
-          $files_list[] = ($dir .'/'. $file);
+          $files_list[] = ($dir . '/' . $file);
         }
       }
       else {
-        inline_devel_get_all_files($dir .'/'. $file, $files_list);
+        inline_devel_get_all_files($dir . '/' . $file, $files_list);
       }
     }
   }
@@ -176,7 +179,7 @@ function inline_devel_get_relevent_functions($funcion_name) {
 
   $functions = get_defined_functions();
 
-   if ($cache = cache_get('function_list')) {
+  if ($cache = cache_get('function_list')) {
     $scope = $cache->data;
   }
   else {
@@ -197,7 +200,11 @@ function inline_devel_get_relevent_functions($funcion_name) {
   foreach ($scope as $type => $functions) {
     foreach ($functions as $function) {
       if (strpos(strtolower($function), strtolower($funcion_name)) === 0) {
-        $output_functions[] = array('id' => $i++,  'name' => $function, 'type' => $type);
+        $output_functions[] = array(
+          'id' => $i++,
+          'name' => $function,
+          'type' => $type,
+        );
       }
     }
   }
@@ -217,7 +224,7 @@ function inline_devel_php_parsing($code) {
 }
 
 /**
- * Rename hook to the inline_devel_dummy_module
+ * Rename hook to the inline_devel_dummy_module.
  */
 function inline_devel_change_hook_prefix(&$text) {
   $text = str_replace("hook", "inline_devel_dummy_module", $text);
@@ -249,11 +256,9 @@ function _inline_devel_run_sessioned_functions() {
   }
   if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
     foreach ($_SESSION['function'] as $function) {
-     eval('
-        function ' . $function['function'] . '('. $function['arguments'] .') {
-          ' . $function['content'] . '
-        }
-      ');
+      eval('function ' . $function['function'] . '(' . $function['arguments'] . ') {
+        ' . $function['content'] . '
+      }');
     }
   }
 }

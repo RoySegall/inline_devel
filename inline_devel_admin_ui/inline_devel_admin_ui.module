@@ -1,15 +1,19 @@
 <?php
+/**
+ * @file
+ * The module file for the admin ui for inline devel.
+ */
 
 /**
- * Implement hook_menu().
+ * Implements hook_menu().
  */
 function inline_devel_admin_ui_menu() {
   $items = array();
 
   $items['admin/config/development/inline_devel_admin'] = array(
     'page callback' => 'inline_devel_admin_ui_session_manage',
-    'title' => t('Temporary hooks'),
-    'description' => t('Manage here your defined hooks via the inline devel module'),
+    'title' => 'Temporary hooks',
+    'description' => 'Manage here your defined hooks via the inline devel module',
     'access arguments' => array('access devel information'),
   );
 
@@ -33,7 +37,7 @@ function inline_devel_admin_ui_session_manage() {
     t('Function name'),
     t('Arguments'),
     t('Content'),
-    t('Options')
+    t('Options'),
   );
 
   if (empty($_SESSION['function'])) {
@@ -45,7 +49,7 @@ function inline_devel_admin_ui_session_manage() {
         $function['function'],
         $function['arguments'],
         $function['content'],
-        l(t('Delete'), 'admin/config/development/inline_devel_admin/delete_session/' . $function['function'])
+        l(t('Delete'), 'admin/config/development/inline_devel_admin/delete_session/' . $function['function']),
       );
     }
   }
@@ -62,11 +66,10 @@ function inline_devel_admin_ui_session_delete($name) {
   unset($_SESSION['function'][$name]);
 
   $args = array(
-    '@function-name' => $name
+    '@function-name' => $name,
   );
 
   drupal_set_message(t('The function @function-name was removed from the session function list.', $args));
 
   drupal_goto('admin/config/development/inline_devel_admin');
 }
-
