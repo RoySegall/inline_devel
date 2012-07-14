@@ -120,10 +120,26 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 1;
 }
 
+/**
+ * Close the window that show the available functions/classes/interfaces/hooks.
+ */
+function inline_devel_close_suggestor() {
+  $("#suggestion").html('');
+  $("#suggestion").hide();
+}
+
 //-----------------------------------------------
 //  Events handling.
 //-----------------------------------------------
 
+// Hide the suggestor when there no letters.
+setInterval(function() {
+  if ($("#edit-code").val() != null && $("#edit-code").val().length == 0) {
+    inline_devel_close_suggestor();
+  }
+}, 1);
+
+// The core of the inline devel js functionality area.
 Drupal.behaviors.functionLoad = {
   attach: function() {
 
@@ -178,8 +194,8 @@ Drupal.behaviors.functionLoad = {
         }
       }
 
-      // Check if we have only one function - if so, when clicking enter the function
-      // will throw to the function.
+      // Check if we have only one function - if so, when clicking enter the
+      // function will throw to the function.
       if (availableFunctionNumber == 1) {
         var divElement = $("#suggestion div");
       }
@@ -259,8 +275,7 @@ Drupal.behaviors.liveEvents = {
       // Don't break row.
       $("#suggestion .function").removeClass('selected-function');
 
-      $("#suggestion").html('');
-      $("#suggestion").hide();
+      inline_devel_close_suggestor();
     });
 
     // Handling when hovering above function.
@@ -272,10 +287,17 @@ Drupal.behaviors.liveEvents = {
   }
 }
 
-Drupal.behaviors.shortCuts = {
+// Keyboard events handling.
+Drupal.behaviors.keyBoardEvents = {
   attach: function() {
 
     $(document).keydown(function(event) {
+      // ESC button for closing the suggestor at any time.
+      if (event.which == 27) {
+        inline_devel_close_suggestor();
+      }
+
+      // Ctrl + s handling
       if (event.ctrlKey && event.which == 83) {
         $("#devel-execute-form").submit();
         event.preventDefault();
