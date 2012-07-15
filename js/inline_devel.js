@@ -128,13 +128,38 @@ function inline_devel_close_suggestor() {
   $("#suggestion").hide();
 }
 
+/**
+ * Get the position of a selected function inside the overflow div.
+ */
+function inline_devel_get_position_in_overflow(keyNumber) {
+  var functionHeight = $("#suggestion").attr("scrollHeight");
+  var elementsNumber = $("#suggestion div.function").length;
+  var currentlocation = $("#suggestion .selected-function").index();
+  var ratio = functionHeight/elementsNumber;
+
+  if (currentlocation <= 0) {
+    currentlocation = 1;
+  }
+
+  // How much padding we need for the scroller when scrolling up and down.
+  if (keyNumber == 38) {
+    var scrollerMarginTop = 150;
+  }
+  else {
+    var scrollerMarginTop = 75;
+  }
+
+  $("#suggestion").scrollTop((ratio * currentlocation) - scrollerMarginTop);
+}
+
+
 //-----------------------------------------------
 //  Events handling.
 //-----------------------------------------------
 
-// Hide the suggestor when there no letters.
+// Hide the suggestor when there no letters or no functions.
 setInterval(function() {
-  if ($("#edit-code").val() != null && $("#edit-code").val().length == 0) {
+  if (($("#edit-code").val() != null && $("#edit-code").val().length == 0) || $("#suggestion div.function").length == 0) {
     inline_devel_close_suggestor();
   }
 }, 1);
@@ -158,6 +183,7 @@ Drupal.behaviors.functionLoad = {
       var availableFunctionNumber = $("#suggestion div.function").length;
 
       inline_devel_get_last_word('edit-code', keyNumber);
+      inline_devel_get_position_in_overflow(keyNumber);
 
       // The functions is revealed to the user. When scrolling down with the
       // keyboard need to keep the the courser in the same place for replacing
