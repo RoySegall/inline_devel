@@ -121,7 +121,10 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
 }
 
 /**
- * Close the window that show the available functions/classes/interfaces/hooks.
+ * suggestor - The window that show the available functions/classes/interfaces
+ *  or hooks.
+ *
+ * Close the suggestor.
  */
 function inline_devel_close_suggestor() {
   $("#suggestion").html('');
@@ -137,6 +140,7 @@ function inline_devel_get_position_in_overflow(keyNumber) {
   var currentlocation = $("#suggestion .selected-function").index();
   var ratio = functionHeight/elementsNumber;
 
+  // Reset.
   if (currentlocation <= 0) {
     currentlocation = 1;
   }
@@ -149,9 +153,9 @@ function inline_devel_get_position_in_overflow(keyNumber) {
     var scrollerMarginTop = 75;
   }
 
+  // Set the scroller location near to the selected function.
   $("#suggestion").scrollTop((ratio * currentlocation) - scrollerMarginTop);
 }
-
 
 //-----------------------------------------------
 //  Events handling.
@@ -183,13 +187,13 @@ Drupal.behaviors.functionLoad = {
       var availableFunctionNumber = $("#suggestion div.function").length;
 
       inline_devel_get_last_word('edit-code', keyNumber);
-      inline_devel_get_position_in_overflow(keyNumber);
 
       // The functions is revealed to the user. When scrolling down with the
       // keyboard need to keep the the courser in the same place for replacing
       // words properly.
       if ((keyNumber == 38 || keyNumber == 40) && availableFunctionNumber > 0) {
         keyPressed.preventDefault();
+        inline_devel_get_position_in_overflow(keyNumber);
       }
 
       if ((keyNumber >= 38 || keyNumber.which <= 40)) {
