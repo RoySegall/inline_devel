@@ -31,11 +31,7 @@ function _inline_devel_textarea_helper(element_id) {
  * Check for special chars that can split sentence for words.
  */
 function inline_devel_speical_chars(charecter) {
-  var chars = Array(
-    " ", '(', ')', ';'
-  );
-
-  if (jQuery.inArray(charecter, chars) >= 0) {
+  if (jQuery.inArray(charecter, $.speicalChars) >= 0) {
     return true;
   }
   else {
@@ -101,7 +97,14 @@ function inline_devel_get_last_word(element_id) {
     var key_end = value.length;
   }
   
-  return value.substr(key_start, key_end);
+  // Incase we got on of the spcial chars in the word - remove it.
+  var word = value.substr(key_start, key_end);
+  
+  for (i = 0; i < $.speicalChars.length; i++) {
+    word = word.replace($.speicalChars[i], '');
+  }
+  
+  return word;
 }
 
 /**
@@ -125,7 +128,7 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  $("#" + element_id).val(data.value.slice(0, start) + ' ' + word + "(" + data.value.slice(end));
+  $("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
 
   // Put the cursor in the after the string we put into the textarea.
   data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 2;

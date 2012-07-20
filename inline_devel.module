@@ -11,10 +11,13 @@ function inline_devel_init() {
    // Check if we need to flush the hooks cache when a hook removed/declared.
   _inline_devel_clear_cache_when_needed();
 }
- 
+
+/**
+ * Implements hook_boot().
+ */
 function inline_devel_boot() {
-  _inline_devel_run_sessioned_functions();
   // Building declared function in each page callback.
+  _inline_devel_run_sessioned_functions();
 }
 
 /**

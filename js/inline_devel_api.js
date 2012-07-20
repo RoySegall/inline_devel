@@ -31,6 +31,9 @@
     return $(this).getSelectionStart();
   }
   
+  // Variables.
   $.keyNumber = 0;
-
+  $.speicalChars = Array(
+    " ", '(', ')', ';'
+  );
 })(jQuery);
