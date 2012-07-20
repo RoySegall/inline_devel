@@ -1,4 +1,4 @@
-name = Devel inline
+name = Inline  devel
 description = Inline php editor.
 package = Development
 core = 7.x

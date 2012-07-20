@@ -1,23 +1,8 @@
 (function ($) {
+
 //-----------------------------------------------
 //  API area
 //-----------------------------------------------
-
-/**
- * Return data about the text area we manipulating.
- */
-function _inline_devel_textarea_helper(element_id) {
-  var elem = document.getElementById(""+ element_id + "");
-
-  var cursor = elem.selectionEnd;
-  var value = $("#" + element_id).val();
-
-  return data = {
-    cursor: cursor,
-    value: value,
-    elem: elem
-  };
-}
 
 /**
  * Short function name that will print console.log.
@@ -27,15 +12,54 @@ function log(word) {
 }
 
 /**
+ * Return data about the text area we manipulating.
+ */
+function _inline_devel_textarea_helper(element_id) {
+
+  var elem = document.getElementById(""+ element_id + "");
+  var cursor = $("#" + element_id).getCursorPosition();
+  var value = $("#" + element_id).val();
+  
+  return data = {
+    cursor: cursor,
+    value: value,
+    elem: elem
+  };
+}
+
+/**
  * Check for special chars that can split sentence for words.
  */
-function inline_devel_speical_chars(chr) {
-  if (chr == '' || chr == ' ' || chr == '(' || chr == ')' || chr == ';' || chr == "\n" || chr == "\t" || chr == "\r") {
+function inline_devel_speical_chars(charecter) {
+  var chars = Array(
+    " ", '(', ')', ';'
+  );
+
+  if (jQuery.inArray(charecter, chars) >= 0) {
     return true;
   }
   else {
     return false;
   }
+}
+
+/**
+ * Get the current line.
+ * 
+ *  @param element_id
+ *    The DOM element id.
+ */
+function inline_devel_get_current_line(element_id) {
+  var data = _inline_devel_textarea_helper(element_id);
+
+  start = data.value.lastIndexOf('\n', data.cursor - 1) + 1,
+  end = data.value.indexOf('\n', data.cursor);
+
+  if (end == -1) {
+    end = data.value.length;
+  }
+
+  return data.value.substr(start, end - start);
 }
 
 /**
@@ -45,52 +69,39 @@ function inline_devel_speical_chars(chr) {
  *  @param element_id
  *    The DOM element id.
  */
-function inline_devel_get_last_word(element_id, keyNumber) {
+function inline_devel_get_last_word(element_id) {
   // Define variables.
   var data = _inline_devel_textarea_helper(element_id);
 
   var elem = data.elem;
   var cursor = data.cursor;
-  var value = data.value;
-  var key_start = key_end = 0;
+  var value = inline_devel_get_current_line(element_id);
+
   var word = '';
-
-  // Get the string that the string end in.
-  for (var i = cursor; i <= value.length; i++) {
-    var chr = value.charAt(i+1);
-
-    if (inline_devel_speical_chars(chr)) {
-      key_end = i;
-      break;
-    }
-  }
-
-  // Get the key the string start in.
+  
   for (var i = cursor; i >= 0; i--) {
-    var chr = value.charAt(i-1);
-
-    if (inline_devel_speical_chars(chr)) {
-      key_start = i;
+    if (inline_devel_speical_chars(value.charAt(i))) {
+      var key_start = i;
       break;
     }
   }
-
-  // Building string, the function substr wasn't worked here.
-  for (i = key_start; i <= key_end; i++) {
-    word += value.charAt(i);
+  
+  if (key_start == undefined) {
+    key_start = 0;
   }
-
-  // Check if the word we got contain white species. If so need to check
-  if (word.indexOf(" ") != -1) {
-    // Check the direction of the cursor - depends on it, we decide which key
-    // the return.
-    var key = keyNumber == 39 ? 1 : 0;
-
-    return word.split(" ")[key];
+  
+  for (var i = cursor; i <= value.length; i++) {
+    if (inline_devel_speical_chars(value.charAt(i))) {
+      var key_end = i;
+      break;
+    }
   }
-
-  // Return the current word.
-  return word;
+  
+  if (key_end == undefined) {
+    var key_end = value.length;
+  }
+  
+  return value.substr(key_start, key_end);
 }
 
 /**
@@ -114,10 +125,10 @@ function inline_devel_insert_element_propperly(element_id, last_word, word) {
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  $("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
+  $("#" + element_id).val(data.value.slice(0, start) + ' ' + word + "(" + data.value.slice(end));
 
   // Put the cursor in the after the string we put into the textarea.
-  data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 1;
+  data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 2;
 }
 
 /**
@@ -134,7 +145,7 @@ function inline_devel_close_suggestor() {
 /**
  * Get the position of a selected function inside the overflow div.
  */
-function inline_devel_get_position_in_overflow(keyNumber) {
+function inline_devel_get_position_in_overflow() {
   var functionHeight = $("#suggestion").attr("scrollHeight");
   var elementsNumber = $("#suggestion div.function").length;
   var currentlocation = $("#suggestion .selected-function").index();
@@ -146,7 +157,7 @@ function inline_devel_get_position_in_overflow(keyNumber) {
   }
 
   // How much padding we need for the scroller when scrolling up and down.
-  if (keyNumber == 38) {
+  if ($.keyNumber == 38) {
     var scrollerMarginTop = 150;
   }
   else {
@@ -155,6 +166,33 @@ function inline_devel_get_position_in_overflow(keyNumber) {
 
   // Set the scroller location near to the selected function.
   $("#suggestion").scrollTop((ratio * currentlocation) - scrollerMarginTop);
+}
+
+/**
+ * Don't auto complete when there are reserved words.
+ * 
+ *  @param element_id
+ *    The DOM element id.
+ */
+function inline_devel_break_on_reserved(element_id) {
+  var line = inline_devel_get_current_line(element_id);
+  
+  // Reserved words - after them auto complete will no be available.
+  var reserved = Array(
+    'abstract', 'and', 'as', 'break', 'case', 'catch', 'class', 'clone',
+    'const', 'continue', 'declare', 'default', 'do', 'else', 'enddeclare',
+    'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'final',
+    'global', 'goto', 'implements', 'include', 'include_once',
+    'instanceof', 'insteadof', 'interface', 'namespace', 'new', 'or', 
+    'private', 'protected', 'public', 'require', 'require_once', 'static', 
+    'throw', 'trait', 'try', 'unset', 'use', 'var', 'xor'
+  );
+  
+  for (var i = 0; i < reserved.length; i++) {
+    if (line.indexOf(reserved[i], 0) == 0) {
+      return 0;
+    }
+  }
 }
 
 //-----------------------------------------------
@@ -181,24 +219,27 @@ Drupal.behaviors.functionLoad = {
 
     // Each key press.
     textarea.keydown(function(keyPressed) {
-
-      var keyNumber = keyPressed.which;
+      
+      $.keyNumber = keyPressed.which;
       var selectedDiv = $("#suggestion .selected-function");
       var availableFunctionNumber = $("#suggestion div.function").length;
-
-      inline_devel_get_last_word('edit-code', keyNumber);
+      
+      if (inline_devel_break_on_reserved('edit-code') == 0) {
+        inline_devel_close_suggestor();
+        return;
+      }
 
       // The functions is revealed to the user. When scrolling down with the
       // keyboard need to keep the the courser in the same place for replacing
       // words properly.
-      if ((keyNumber == 38 || keyNumber == 40) && availableFunctionNumber > 0) {
+      if (($.keyNumber == 38 || $.keyNumber == 40) && availableFunctionNumber > 0) {
         keyPressed.preventDefault();
-        inline_devel_get_position_in_overflow(keyNumber);
+        inline_devel_get_position_in_overflow($.keyNumber);
       }
 
-      if ((keyNumber >= 38 || keyNumber.which <= 40)) {
+      if (($.keyNumber >= 38 || $.keyNumber.which <= 40)) {
         currentFunction = $("#suggestion .selected-function").index();
-        if (keyNumber == 38) {
+        if ($.keyNumber == 38) {
             $("#suggestion .function").removeClass('selected-function');
             $("#suggestion .function:nth-child(" + (currentFunction) + ")").addClass('selected-function');
 
@@ -233,7 +274,7 @@ Drupal.behaviors.functionLoad = {
         var divElement = selectedDiv;
       }
 
-      if (keyNumber == 13 && divElement.html()) {
+      if ($.keyNumber == 13 && divElement.html()) {
 
         // Insert data properly.
         inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement.attr('name'));
@@ -246,7 +287,7 @@ Drupal.behaviors.functionLoad = {
         functionsName.hide();
         return;
       }
-
+      
       // When browsing in function, don't continue to the next steps.
       if (prevSearch == textarea.val()) {
         return;
@@ -320,6 +361,7 @@ Drupal.behaviors.liveEvents = {
 // Keyboard events handling.
 Drupal.behaviors.keyBoardEvents = {
   attach: function() {
+    
 
     $(document).keydown(function(event) {
       // ESC button for closing the suggestor at any time.

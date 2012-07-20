@@ -8,11 +8,13 @@
  * Implements hook_init().
  */
 function inline_devel_init() {
-  // Check if we need to flush the hooks cache when a hook removed/declared.
+   // Check if we need to flush the hooks cache when a hook removed/declared.
   _inline_devel_clear_cache_when_needed();
-
-  // Building declared function in each page callback.
+}
+ 
+function inline_devel_boot() {
   _inline_devel_run_sessioned_functions();
+  // Building declared function in each page callback.
 }
 
 /**
@@ -45,6 +47,7 @@ function inline_devel_php_functions($text) {
  */
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   // Add the js and css file.
+  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel_api.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 

@@ -1,4 +1,4 @@
-name = Devel inline UI
+name = Inline devel UI
 description = Admin ui for devel inline.
 package = Development
 core = 7.x
