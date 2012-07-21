@@ -49,6 +49,9 @@ function inline_devel_php_functions($text) {
  * Implements hook_form_FORM_ID_alter().
  */
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
+  // Load the default settings into the js.
+  _inline_devel_load_settings_to_js();
+  
   // Add the js and css file.
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel_api.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
@@ -267,4 +270,32 @@ function _inline_devel_run_sessioned_functions() {
       }');
     }
   }
+}
+
+/**
+ * Load the settings of the keyboard from the DB and throw it to the Drupal js
+ * settings variable.
+ */
+function _inline_devel_load_settings_to_js() {
+  $variables = array(
+    'ctrl_s_enable' => TRUE,
+    'esc_enable' => TRUE,
+    'spaces_instead_of_tabs' => TRUE,
+    'number_of_spaces' => 2,
+  );
+  
+  $settings = array();
+  
+  foreach ($variables as $name => $value) {
+    $settings[$name] = variable_get($name, $value);
+  }
+  
+  drupal_add_js(
+    array(
+      'inline_devel' => $settings,
+    ), 
+    array(
+      'type' => 'setting',
+    )
+  );
 }

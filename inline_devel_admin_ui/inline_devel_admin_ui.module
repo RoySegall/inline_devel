@@ -10,17 +10,33 @@
 function inline_devel_admin_ui_menu() {
   $items = array();
 
-  $items['admin/config/development/inline_devel_admin'] = array(
-    'page callback' => 'inline_devel_admin_ui_session_manage',
+  $default_task = array(
     'title' => 'Temporary hooks',
     'description' => 'Manage here your defined hooks via the inline devel module',
     'access arguments' => array('access devel information'),
+    'page callback' => 'inline_devel_admin_ui_session_manage',
+    'weight' => 0,
   );
 
-  $items['admin/config/development/inline_devel_admin/delete_session/%'] = array(
+  $items['admin/structure/inline_devel_admin'] = $default_task;
+  $items['admin/structure/inline_devel_admin/hooks'] = $default_task + array(
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items['admin/structure/inline_devel_admin/delete_session/%'] = array(
     'page callback' => 'inline_devel_admin_ui_session_delete',
-    'page arguments' => array(5),
+    'page arguments' => array(4),
     'access arguments' => array('access devel information'),
+  );
+  
+  $items['admin/structure/inline_devel_admin/shotcuts'] = array(
+    'title' => 'Shortcuts',
+    'description' => 'Manage here your defined hooks via the inline devel module',
+    'access arguments' => array('access devel information'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('inline_devel_admin_ui_shorcuts_manage'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
   );
 
   return $items;
@@ -31,7 +47,10 @@ function inline_devel_admin_ui_menu() {
  */
 function inline_devel_admin_ui_session_manage() {
 
-  $content = t('Here you can manage your temporary function that were defined in the devel execute page.') . '<br /><br />';
+  $content = t('Here you can manage your temporary functions that were defined in the !devel-execute-page-link.',
+  array(
+   '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php')
+  )) . '<br /><br />';
 
   $header = array(
     t('Function name'),
@@ -49,7 +68,7 @@ function inline_devel_admin_ui_session_manage() {
         $function['function'],
         $function['arguments'],
         $function['content'],
-        l(t('Delete'), 'admin/config/development/inline_devel_admin/delete_session/' . $function['function']),
+        l(t('Delete'), 'admin/structure/inline_devel_admin/delete_session/' . $function['function']),
       );
     }
   }
@@ -71,5 +90,47 @@ function inline_devel_admin_ui_session_delete($name) {
 
   drupal_set_message(t('The function @function-name was removed from the session function list.', $args));
 
-  drupal_goto('admin/config/development/inline_devel_admin');
+  drupal_goto('admin/structure/inline_devel_admin');
+}
+
+/**
+ * Manage the shortcuts.
+ */
+function inline_devel_admin_ui_shorcuts_manage() {
+  // Load the default settings into the js.
+  _inline_devel_load_settings_to_js();
+
+  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel_admin_ui') . '/js/inline_devel_admin_ui.js';
+
+  $form['ctrl_s_enable'] = array(
+    '#title' => t('Ctrl + s will submit the form'),
+    '#description' => t('Using the ctrl+s will submit the form of the devel execute page.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('ctrl_s_enable', TRUE),
+  );
+  
+  $form['esc_enable'] = array(
+    '#title' => t('Close suggestor with esc button'),
+    '#description' => t('When clicking on the esc button and the suggestor is visible it will be closed.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('esc_enable', TRUE),
+  );
+
+  $form['spaces_instead_of_tabs'] = array(
+    '#title' => t('Insert spaces instead of tabs'),
+    '#description' => t('This functionalty will disable the normal tab button functionality(jump between elements) and insert spaces instead.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('spaces_instead_of_tabs', TRUE),
+  );
+
+  $form['number_of_spaces'] = array(
+    '#title' => t('Number of spaces instead of tabs'),
+    '#description' => t('Number of spaces to replace the tabs. Default is value is two.'),
+    '#type' => 'textfield',
+    '#default_value' => variable_get('number_of_spaces', 2),
+    '#prefix' => '<div id="number_of_spaces">',
+    '#suffix' => '</div>',
+  );
+  
+  return system_settings_form($form);
 }

@@ -209,6 +209,7 @@ setInterval(function() {
   }
 }, 1);
 
+
 // The core of the inline devel js functionality area.
 Drupal.behaviors.functionLoad = {
   attach: function() {
@@ -362,20 +363,22 @@ Drupal.behaviors.liveEvents = {
 
 // Keyboard events handling: Shortcuts tabs and more things that relate to IDE.
 Drupal.behaviors.keyBoardEvents = {
-  attach: function() {
+  attach: function(context, settings) {
 
     // TODO: create a ui that will give us the ability to create short cuts
     // much more easily.
-
+    
+    var inline_devel_settings = settings.inline_devel;
+    
     // Short cuts.
     $(document).keydown(function(event) {
       // ESC button for closing the suggestor at any time.
-      if (event.which == 27) {
+      if (inline_devel_settings.esc_enable == true && event.which == 27) {
         inline_devel_close_suggestor();
       }
 
       // Ctrl + s handling
-      if (event.ctrlKey && event.which == 83) {
+      if (inline_devel_settings.ctrl_s_enable == true && event.ctrlKey && event.which == 83) {
         $("#devel-execute-form").submit();
         event.preventDefault();
       }
@@ -385,15 +388,27 @@ Drupal.behaviors.keyBoardEvents = {
     // fuction inline_devel_insert_element_propperly becuase she insert the '('
     // char and i dont want to keep it clean.
     $("#edit-code").keydown(function(event) {
+      // spacces instead of tabs option is disable.
+      if (inline_devel_settings.spaces_instead_of_tabs == false) {
+        return;
+      }
+      
       var data = _inline_devel_textarea_helper('edit-code');
       var cursor = data.elem.selectionStart;
+      var white_space = '';
       
       if (event.which == 9) {
         event.preventDefault();
-        // log(data.elem.selectionStart);
-        $("#edit-code").val(data.value.slice(0, data.elem.selectionStart) + '  ' + data.value.slice(data.elem.selectionEnd));
-        data.elem.selectionStart = cursor + 2;
-        data.elem.selectionEnd = cursor + 2;
+        
+        // Building the whitespaces.
+        for (var i = 0; i < inline_devel_settings.number_of_spaces; i++) {
+          white_space += ' ';
+        }
+        
+        // Insert white spaces and string manipulations.
+        $("#edit-code").val(data.value.slice(0, data.elem.selectionStart) + white_space + data.value.slice(data.elem.selectionEnd));
+        data.elem.selectionStart = cursor + inline_devel_settings.number_of_spaces;
+        data.elem.selectionEnd = cursor + inline_devel_settings.number_of_spaces;
       }
     });
   }

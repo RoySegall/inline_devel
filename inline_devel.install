@@ -1,0 +1,25 @@
+<?php
+/**
+ * @file
+ * Instllation file for inline devel.
+ */
+ 
+/**
+ * Implements hook_install().
+ */
+function inline_devel_install() {
+  variable_set('ctrl_s_enable', TRUE);
+  variable_set('esc_enable', TRUE);
+  variable_set('spaces_instead_of_tabs', TRUE);
+  variable_set('number_of_spaces', 2);
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function inline_devel_uninstall() {
+  variable_del('ctrl_s_enable');
+  variable_del('esc_enable');
+  variable_del('spaces_instead_of_tabs');
+  variable_del('number_of_spaces');
+}
