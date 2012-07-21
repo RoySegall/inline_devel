@@ -121,14 +121,24 @@ function inline_devel_get_last_word(element_id) {
  *
  *  @param word
  *    The word we need to insert.
+ *
+ *  @param type
+ *    The type of the element we inserting: function, class iterface or hook.
  */
-function inline_devel_insert_element_propperly(element_id, last_word, word) {
+function inline_devel_insert_element_propperly(element_id, last_word, word, type) {
   var data = _inline_devel_textarea_helper(element_id);
 
   var start = data.cursor - last_word.length;
   var end = data.cursor;
+  
+  if (jQuery.inArray(type, Array('class', 'interface')) != -1) {
+    var chr = '';
+  }
+  else {
+   var chr = '(';
+  }
 
-  $("#" + element_id).val(data.value.slice(0, start) + word + "(" + data.value.slice(end));
+  $("#" + element_id).val(data.value.slice(0, start) + word + chr + data.value.slice(end));
 
   // Put the cursor in the after the string we put into the textarea.
   data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 2;
@@ -182,7 +192,7 @@ function inline_devel_break_on_reserved(element_id) {
   
   // Reserved words - after them auto complete will no be available.
   var reserved = Array(
-    'abstract', 'and', 'as', 'break', 'case', 'catch', 'class', 'clone',
+    'abstract', 'and', 'as', 'break', 'case', 'catch', 'clone',
     'const', 'continue', 'declare', 'default', 'do', 'else', 'enddeclare',
     'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'final',
     'global', 'goto', 'implements', 'include', 'include_once',
@@ -198,6 +208,18 @@ function inline_devel_break_on_reserved(element_id) {
   }
 }
 
+/**
+ * Return an item push that will be used when displaying the suggeestor.
+ * 
+ *  @param val
+ *    An object that contain the parsed data for generation a propper div
+ *    inside the suggestor.
+ * 
+ *  @return 
+ */
+function inline_devel_generate_item_push(val) {
+  return "<div class='function' name='" + val.name + "' id='" + val.id + "' type='" + val.type + "'>" + val.name + " (" + val.type + ")</div>";
+}
 //-----------------------------------------------
 //  Events handling.
 //-----------------------------------------------
@@ -208,7 +230,6 @@ setInterval(function() {
     inline_devel_close_suggestor();
   }
 }, 1);
-
 
 // The core of the inline devel js functionality area.
 Drupal.behaviors.functionLoad = {
@@ -227,7 +248,7 @@ Drupal.behaviors.functionLoad = {
       var selectedDiv = $("#suggestion .selected-function");
       var availableFunctionNumber = $("#suggestion div.function").length;
       
-      if (inline_devel_break_on_reserved('edit-code') == 0) {
+      if (inline_devel_break_on_reserved('edit-code') == 0 || jQuery.inArray(keyPressed.which, Array(48, 57, 219, 221)) > -1) {
         inline_devel_close_suggestor();
         return;
       }
@@ -278,9 +299,8 @@ Drupal.behaviors.functionLoad = {
       }
 
       if ($.keyNumber == 13 && divElement.html()) {
-
         // Insert data properly.
-        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement.attr('name'));
+        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement.attr('name'), divElement.attr('type'));
 
         // Don't break row.
         keyPressed.preventDefault();
@@ -316,12 +336,34 @@ Drupal.behaviors.functionLoad = {
 
         // Build the array of function to divs.
         $.each(data, function(key, val) {
-          items.push("<div class='function' name='"+ val.name + "' id='" + val.id + "'>" + val.name + ' (' + val.type + ')</div>');
+          // When you write down the word function - suggest only hooks()
+          var row_begining = inline_devel_get_current_line('edit-code').split(" ")[0];
+          var shown = false;
+
+          // We have the word class/function at the begining.
+          if (jQuery.inArray(row_begining, Array('class', 'function')) > -1) {
+            if (row_begining == 'function' && val.type == 'hooks') {
+              items.push(inline_devel_generate_item_push(val));
+            }
+            else if (row_begining == 'class' && val.type == 'class') {
+              items.push(inline_devel_generate_item_push(val));
+            }
+            
+            var shown = true;
+          }
+          
+          // We didn't shown any thing, present all options.
+          if (shown == false) {
+            // Show all the available functions.
+            items.push(inline_devel_generate_item_push(val));
+          }
         });
 
         // Insert the html.
         functionsName.html(items.join(''));
 
+        // Set the prevSearch variable to this serach. This preventing
+        // meaningless refreshing of the suggestor.
         prevSearch = textarea.val();
       });
     });
@@ -344,7 +386,7 @@ Drupal.behaviors.liveEvents = {
     $("#suggestion .function").live("click", function(event) {
       var id = (event).srcElement.id;
       // Insert data propperly.
-      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id).attr('name'));
+      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id).attr('name'), $("#suggestion .function#" + id).attr('type'));
 
       // Don't break row.
       $("#suggestion .function").removeClass('selected-function');
@@ -364,10 +406,6 @@ Drupal.behaviors.liveEvents = {
 // Keyboard events handling: Shortcuts tabs and more things that relate to IDE.
 Drupal.behaviors.keyBoardEvents = {
   attach: function(context, settings) {
-
-    // TODO: create a ui that will give us the ability to create short cuts
-    // much more easily.
-    
     var inline_devel_settings = settings.inline_devel;
     
     // Short cuts.
