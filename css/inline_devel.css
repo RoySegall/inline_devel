@@ -7,8 +7,8 @@
   border: #4388ab solid 1px;
   color: #052535;
   font-size: 17px;
-  overflow: scroll;
   height: 220px;
+  overflow: scroll;
 }
 
 .bordered div {

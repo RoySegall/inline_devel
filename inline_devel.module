@@ -8,7 +8,7 @@
  * Implements hook_init().
  */
 function inline_devel_init() {
-   // Check if we need to flush the hooks cache when a hook removed/declared.
+  // Check if we need to flush the hooks cache when a hook removed/declared.
   _inline_devel_clear_cache_when_needed();
 }
 
@@ -51,7 +51,7 @@ function inline_devel_php_functions($text) {
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   // Load the default settings into the js.
   _inline_devel_load_settings_to_js();
-  
+
   // Add the js and css file.
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel_api.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
@@ -273,8 +273,7 @@ function _inline_devel_run_sessioned_functions() {
 }
 
 /**
- * Load the settings of the keyboard from the DB and throw it to the Drupal js
- * settings variable.
+ * Load the keyboards settings from the DB into Drupal js settings variable.
  */
 function _inline_devel_load_settings_to_js() {
   $variables = array(
@@ -283,17 +282,17 @@ function _inline_devel_load_settings_to_js() {
     'spaces_instead_of_tabs' => TRUE,
     'number_of_spaces' => 2,
   );
-  
+
   $settings = array();
-  
+
   foreach ($variables as $name => $value) {
     $settings[$name] = variable_get($name, $value);
   }
-  
+
   drupal_add_js(
     array(
       'inline_devel' => $settings,
-    ), 
+    ),
     array(
       'type' => 'setting',
     )

@@ -3,7 +3,7 @@
  * @file
  * Instllation file for inline devel.
  */
- 
+
 /**
  * Implements hook_install().
  */

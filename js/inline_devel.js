@@ -19,7 +19,7 @@ function _inline_devel_textarea_helper(element_id) {
   var elem = document.getElementById(""+ element_id + "");
   var cursor = $("#" + element_id).getCursorPosition();
   var value = $("#" + element_id).val();
-  
+
   return data = {
     cursor: cursor,
     value: value,
@@ -41,7 +41,7 @@ function inline_devel_speical_chars(charecter) {
 
 /**
  * Get the current line.
- * 
+ *
  *  @param element_id
  *    The DOM element id.
  */
@@ -74,36 +74,36 @@ function inline_devel_get_last_word(element_id) {
   var value = inline_devel_get_current_line(element_id);
 
   var word = '';
-  
+
   for (var i = cursor; i >= 0; i--) {
     if (inline_devel_speical_chars(value.charAt(i))) {
       var key_start = i;
       break;
     }
   }
-  
+
   if (key_start == undefined) {
     key_start = 0;
   }
-  
+
   for (var i = cursor; i <= value.length; i++) {
     if (inline_devel_speical_chars(value.charAt(i))) {
       var key_end = i;
       break;
     }
   }
-  
+
   if (key_end == undefined) {
     var key_end = value.length;
   }
-  
+
   // Incase we got on of the spcial chars in the word - remove it.
   var word = value.substr(key_start, key_end);
   
   for (i = 0; i < $.speicalChars.length; i++) {
     word = word.replace($.speicalChars[i], '');
   }
-  
+
   return word;
 }
 
@@ -130,7 +130,7 @@ function inline_devel_insert_element_propperly(element_id, last_word, word, type
 
   var start = data.cursor - last_word.length;
   var end = data.cursor;
-  
+
   if (jQuery.inArray(type, Array('class', 'interface')) != -1) {
     var chr = '';
   }
@@ -183,24 +183,24 @@ function inline_devel_get_position_in_overflow() {
 
 /**
  * Don't auto complete when there are reserved words.
- * 
+ *
  *  @param element_id
  *    The DOM element id.
  */
 function inline_devel_break_on_reserved(element_id) {
   var line = inline_devel_get_current_line(element_id);
-  
+
   // Reserved words - after them auto complete will no be available.
   var reserved = Array(
     'abstract', 'and', 'as', 'break', 'case', 'catch', 'clone',
     'const', 'continue', 'declare', 'default', 'do', 'else', 'enddeclare',
     'endfor', 'endforeach', 'endif', 'endswitch', 'endwhile', 'final',
     'global', 'goto', 'implements', 'include', 'include_once',
-    'instanceof', 'insteadof', 'interface', 'namespace', 'new', 'or', 
-    'private', 'protected', 'public', 'require', 'require_once', 'static', 
+    'instanceof', 'insteadof', 'interface', 'namespace', 'new', 'or',
+    'private', 'protected', 'public', 'require', 'require_once', 'static',
     'throw', 'trait', 'try', 'unset', 'use', 'var', 'xor'
   );
-  
+
   for (var i = 0; i < reserved.length; i++) {
     if (line.indexOf(reserved[i], 0) == 0) {
       return 0;
@@ -210,12 +210,10 @@ function inline_devel_break_on_reserved(element_id) {
 
 /**
  * Return an item push that will be used when displaying the suggeestor.
- * 
+ *
  *  @param val
  *    An object that contain the parsed data for generation a propper div
  *    inside the suggestor.
- * 
- *  @return 
  */
 function inline_devel_generate_item_push(val) {
   return "<div class='function' name='" + val.name + "' id='" + val.id + "' type='" + val.type + "'>" + val.name + " (" + val.type + ")</div>";
@@ -247,7 +245,7 @@ Drupal.behaviors.functionLoad = {
       $.keyNumber = keyPressed.which;
       var selectedDiv = $("#suggestion .selected-function");
       var availableFunctionNumber = $("#suggestion div.function").length;
-      
+
       if (inline_devel_break_on_reserved('edit-code') == 0 || jQuery.inArray(keyPressed.which, Array(48, 57, 219, 221)) > -1) {
         inline_devel_close_suggestor();
         return;
@@ -310,7 +308,7 @@ Drupal.behaviors.functionLoad = {
         functionsName.hide();
         return;
       }
-      
+
       // When browsing in function, don't continue to the next steps.
       if (prevSearch == textarea.val()) {
         return;
@@ -348,10 +346,10 @@ Drupal.behaviors.functionLoad = {
             else if (row_begining == 'class' && val.type == 'class') {
               items.push(inline_devel_generate_item_push(val));
             }
-            
+
             var shown = true;
           }
-          
+
           // We didn't shown any thing, present all options.
           if (shown == false) {
             // Show all the available functions.
@@ -407,7 +405,7 @@ Drupal.behaviors.liveEvents = {
 Drupal.behaviors.keyBoardEvents = {
   attach: function(context, settings) {
     var inline_devel_settings = settings.inline_devel;
-    
+
     // Short cuts.
     $(document).keydown(function(event) {
       // ESC button for closing the suggestor at any time.
@@ -421,7 +419,7 @@ Drupal.behaviors.keyBoardEvents = {
         event.preventDefault();
       }
     });
-    
+
     // When clicking on the tab, insert two spaces. I'm not using the api
     // fuction inline_devel_insert_element_propperly becuase she insert the '('
     // char and i dont want to keep it clean.
@@ -434,15 +432,15 @@ Drupal.behaviors.keyBoardEvents = {
       var data = _inline_devel_textarea_helper('edit-code');
       var cursor = data.elem.selectionStart;
       var white_space = '';
-      
+
       if (event.which == 9) {
         event.preventDefault();
-        
+
         // Building the whitespaces.
         for (var i = 0; i < inline_devel_settings.number_of_spaces; i++) {
           white_space += ' ';
         }
-        
+
         // Insert white spaces and string manipulations.
         $("#edit-code").val(data.value.slice(0, data.elem.selectionStart) + white_space + data.value.slice(data.elem.selectionEnd));
         data.elem.selectionStart = cursor + inline_devel_settings.number_of_spaces;

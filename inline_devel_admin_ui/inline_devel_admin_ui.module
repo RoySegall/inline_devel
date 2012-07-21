@@ -28,7 +28,7 @@ function inline_devel_admin_ui_menu() {
     'page arguments' => array(4),
     'access arguments' => array('access devel information'),
   );
-  
+
   $items['admin/structure/inline_devel_admin/shotcuts'] = array(
     'title' => 'Shortcuts',
     'description' => 'Manage here your defined hooks via the inline devel module',
@@ -49,7 +49,7 @@ function inline_devel_admin_ui_session_manage() {
 
   $content = t('Here you can manage your temporary functions that were defined in the !devel-execute-page-link.',
   array(
-   '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php')
+   '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php'),
   )) . '<br /><br />';
 
   $header = array(
@@ -108,7 +108,7 @@ function inline_devel_admin_ui_shorcuts_manage() {
     '#type' => 'checkbox',
     '#default_value' => variable_get('ctrl_s_enable', TRUE),
   );
-  
+
   $form['esc_enable'] = array(
     '#title' => t('Close suggestor with esc button'),
     '#description' => t('When clicking on the esc button and the suggestor is visible it will be closed.'),
@@ -131,6 +131,6 @@ function inline_devel_admin_ui_shorcuts_manage() {
     '#prefix' => '<div id="number_of_spaces">',
     '#suffix' => '</div>',
   );
-  
+
   return system_settings_form($form);
 }
