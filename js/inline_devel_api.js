@@ -33,6 +33,7 @@
   
   // Variables.
   $.keyNumber = 0;
+  $.cursor = 0;
   $.speicalChars = Array(
     " ", '(', ')', ';'
   );

@@ -222,7 +222,6 @@ Drupal.behaviors.functionLoad = {
 
     // Each key press.
     textarea.keydown(function(keyPressed) {
-      
       $.keyNumber = keyPressed.which;
       var selectedDiv = $("#suggestion .selected-function");
       var availableFunctionNumber = $("#suggestion div.function").length;
@@ -361,11 +360,14 @@ Drupal.behaviors.liveEvents = {
   }
 }
 
-// Keyboard events handling.
+// Keyboard events handling: Shortcuts tabs and more things that relate to IDE.
 Drupal.behaviors.keyBoardEvents = {
   attach: function() {
-    
 
+    // TODO: create a ui that will give us the ability to create short cuts
+    // much more easily.
+
+    // Short cuts.
     $(document).keydown(function(event) {
       // ESC button for closing the suggestor at any time.
       if (event.which == 27) {
@@ -376,6 +378,22 @@ Drupal.behaviors.keyBoardEvents = {
       if (event.ctrlKey && event.which == 83) {
         $("#devel-execute-form").submit();
         event.preventDefault();
+      }
+    });
+    
+    // When clicking on the tab, insert two spaces. I'm not using the api
+    // fuction inline_devel_insert_element_propperly becuase she insert the '('
+    // char and i dont want to keep it clean.
+    $("#edit-code").keydown(function(event) {
+      var data = _inline_devel_textarea_helper('edit-code');
+      var cursor = data.elem.selectionStart;
+      
+      if (event.which == 9) {
+        event.preventDefault();
+        // log(data.elem.selectionStart);
+        $("#edit-code").val(data.value.slice(0, data.elem.selectionStart) + '  ' + data.value.slice(data.elem.selectionEnd));
+        data.elem.selectionStart = cursor + 2;
+        data.elem.selectionEnd = cursor + 2;
       }
     });
   }
