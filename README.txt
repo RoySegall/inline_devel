@@ -1,5 +1,5 @@
-            Devel inline - what is it?
-Devel inline is a module that extend the regular devel executed form with an
+            Inline Devel - what is it?
+Inline Devel is a module that extend the regular devel executed form with an
 IDE options.
 
 Why should you use it?
@@ -19,7 +19,7 @@ Go to ?q=devel/php. In the form start to type your code and you'l get the list
 of available functions, classes, interfaces and hooks.
 
 If you'd like to delete some functions that you defined in the execute code
-form emable first the module "Devel inline UI" and then go to
+form emable first the module "Inline devel UI" and then go to
 ?q=admin/config/development/inline_devel_admin and there you can delete the
 functions.
 

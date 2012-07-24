@@ -1,4 +1,4 @@
-name = Inline devel dummy module.
+name = Inline Devel dummy module.
 description = A dummy module for temporary hooks.
 package = Development
 core = 7.x
