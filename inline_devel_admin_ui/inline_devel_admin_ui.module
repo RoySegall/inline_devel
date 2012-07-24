@@ -46,10 +46,9 @@ function inline_devel_admin_ui_menu() {
  * UI for delete the sessions.
  */
 function inline_devel_admin_ui_session_manage() {
-
   $content = t('Here you can manage your temporary functions that were defined in the !devel-execute-page-link.',
   array(
-   '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php'),
+    '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php'),
   )) . '<br /><br />';
 
   $header = array(
