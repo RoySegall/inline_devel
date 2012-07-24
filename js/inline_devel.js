@@ -99,7 +99,7 @@ function inline_devel_get_last_word(element_id) {
 
   // Incase we got on of the spcial chars in the word - remove it.
   var word = value.substr(key_start, key_end);
-  
+
   for (i = 0; i < $.speicalChars.length; i++) {
     word = word.replace($.speicalChars[i], '');
   }
@@ -428,7 +428,7 @@ Drupal.behaviors.keyBoardEvents = {
       if (inline_devel_settings.spaces_instead_of_tabs == false) {
         return;
       }
-      
+
       var data = _inline_devel_textarea_helper('edit-code');
       var cursor = data.elem.selectionStart;
       var white_space = '';
