@@ -48,14 +48,31 @@ function inline_devel_speical_chars(charecter) {
 function inline_devel_get_current_line(element_id) {
   var data = _inline_devel_textarea_helper(element_id);
 
-  start = data.value.lastIndexOf('\n', data.cursor - 1) + 1,
-  end = data.value.indexOf('\n', data.cursor);
+  var cursor = data.cursor;
 
-  if (end == -1) {
-    end = data.value.length;
+  for (var i = cursor; i >= 0; i--) {
+    if (data.value.charCodeAt(i) == 10 || data.value.charCodeAt(i) == NaN) {
+      var key_start = i;
+      break;
+    }
   }
 
-  return data.value.substr(start, end - start);
+  if (key_start == undefined) {
+    key_start = 0;
+  }
+
+  for (var i = cursor; i <= data.value.length; i++) {
+    if (jQuery.inArray(data.value.charCodeAt(i), Array(NaN, "", "\n"))) {
+      var key_end = i;
+      break;
+    }
+  }
+
+  if (key_end == undefined) {
+    var key_end = data.value.length;
+  }
+
+  return data.value.substr(key_start, key_end);
 }
 
 /**
@@ -198,8 +215,16 @@ function inline_devel_break_on_reserved(element_id) {
     'global', 'goto', 'implements', 'include', 'include_once',
     'instanceof', 'insteadof', 'interface', 'namespace', 'new', 'or',
     'private', 'protected', 'public', 'require', 'require_once', 'static',
-    'throw', 'trait', 'try', 'unset', 'use', 'var', 'xor'
+    'var', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'xor'
   );
+
+  var smart_split = line.split(/\s/g);
+
+  $.each(smart_split, function(key, value) {
+    if(jQuery.inArray(value, reserved) > -1) {
+      return 0;
+    }
+  });
 
   for (var i = 0; i < reserved.length; i++) {
     if (line.indexOf(reserved[i], 0) == 0) {
@@ -242,6 +267,7 @@ Drupal.behaviors.functionLoad = {
 
     // Each key press.
     textarea.keydown(function(keyPressed) {
+
       $.keyNumber = keyPressed.which;
       var selectedDiv = $("#suggestion .selected-function");
       var availableFunctionNumber = $("#suggestion div.function").length;
@@ -334,8 +360,10 @@ Drupal.behaviors.functionLoad = {
 
         // Build the array of function to divs.
         $.each(data, function(key, val) {
-          // When you write down the word function - suggest only hooks()
-          var row_begining = inline_devel_get_current_line('edit-code').split(" ")[0];
+          // When you write down the word function - suggest only hooks().
+          var exploded_row = inline_devel_get_current_line('edit-code').split(" ");
+          var row_begining = exploded_row[0];          var row_middle = exploded_row[2];
+          
           var shown = false;
 
           // We have the word class/function at the begining.
@@ -343,7 +371,7 @@ Drupal.behaviors.functionLoad = {
             if (row_begining == 'function' && val.type == 'hooks') {
               items.push(inline_devel_generate_item_push(val));
             }
-            else if (row_begining == 'class' && val.type == 'class') {
+            else if (row_begining == 'class' && row_middle == 'extends' && val.type == 'class') {
               items.push(inline_devel_generate_item_push(val));
             }
 

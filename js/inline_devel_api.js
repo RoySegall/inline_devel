@@ -1,34 +1,19 @@
 (function ($) {
-  jQuery.fn.getSelectionStart = function(){
-    if (this.lengh == 0) {
-      return -1;
+  jQuery.fn.getCursorPosition = function() {
+    var el = $(this).get(0);
+    var pos = 0;
+    if('selectionStart' in el) {
+      pos = el.selectionStart;
+    }
+    else if('selection' in document) {
+      el.focus();
+      var Sel = document.selection.createRange();
+      var SelLength = document.selection.createRange().text.length;
+      Sel.moveStart('character', -el.value.length);
+      pos = Sel.text.length - SelLength;
     }
 
-    input = this[0];
-   
-    var pos = input.value.length;
-   
-    if (input.createTextRange) {
-      var r = document.selection.createRange().duplicate();
-      r.moveEnd('character', input.value.length);
-      if (r.text == '') {
-        pos = input.value.length;
-        pos = input.value.lastIndexOf(r.text);
-      }
-      else if (typeof(input.selectionStart)!="undefined") {
-        pos = input.selectionStart;
-      }
-    }
-
-    return pos;
-  }
-
-  jQuery.fn.getCursorPosition = function(){
-    if(this.lengh == 0) {
-      return -1;
-    }
-
-    return $(this).getSelectionStart();
+    return pos;
   }
 
   // Variables.
@@ -37,4 +22,5 @@
   $.speicalChars = Array(
     " ", '(', ')', ';'
   );
+
 })(jQuery);
