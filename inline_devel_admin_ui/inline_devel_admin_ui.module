@@ -64,10 +64,22 @@ function inline_devel_admin_ui_session_manage() {
   else {
     foreach ($_SESSION['function'] as $function) {
       $rows[] = array(
-        $function['function'],
-        $function['arguments'],
-        $function['content'],
-        l(t('Delete'), 'admin/structure/inline_devel_admin/delete_session/' . $function['function']),
+        array(
+          'data' => $function['function'],
+          'class' => array('function-name'),
+        ),
+        array(
+          'data' => $function['arguments'],
+          'class' => array('function-arguments'),
+        ),
+        array(
+          'data' => $function['content'], 
+          'class' => array('function-content'),
+        ),
+        array(
+          'data' => l(t('Delete'),'admin/structure/inline_devel_admin/delete_session/' . $function['function']), 
+          'class' => array('function-delte-butotn'),
+        ),
       );
     }
   }
