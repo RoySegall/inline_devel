@@ -6,3 +6,6 @@ core = 7.x
 tags[] = developer
 dependencies[] = devel
 dependencies[] = inline_devel_dummy_module
+
+files[] = includes/inline_devel_tests.inc
+files[] = inline_devel.test

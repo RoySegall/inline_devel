@@ -8,16 +8,17 @@
  * Implements hook_init().
  */
 function inline_devel_init() {
-  // Check if we need to flush the hooks cache when a hook removed/declared.
+  // Flush cache when needed.
   _inline_devel_clear_cache_when_needed();
-}
 
-/**
- * Implements hook_boot().
- */
-function inline_devel_boot() {
-  // Building declared function in each page callback.
+  // Run the declared hooks/functions.
   _inline_devel_run_sessioned_functions();
+
+  // For some reason, when we decalre inline_devel_dummy_module_init the
+  // functoin is not implemented well. 
+  if (function_exists('inline_devel_dummy_module_init')) {
+    inline_devel_dummy_module_init();
+  }
 }
 
 /**
@@ -108,6 +109,8 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
     'arguments' => $functions[2],
     'content' => $functions[3],
   );
+
+  $_SESSION['inline_devel_cc'] = TRUE;
 
   // Show message.
   drupal_set_message(t('The function @function-name inserted successfully to the functions stack.', array(
@@ -243,26 +246,17 @@ function inline_devel_change_hook_prefix(&$text) {
  * Check if there new functions in the stack and rebuild cache if needed.
  */
 function _inline_devel_clear_cache_when_needed() {
-  if (!isset($_SESSION['function'])) {
-    $_SESSION['function_number'] = 0;
+  if (isset($_SESSION['inline_devel_cc']) && $_SESSION['inline_devel_cc']) {
+    // Flush all because there is a new function in the stack.
+    drupal_flush_all_caches();
   }
-  else {
-    if (count($_SESSION['function']) != $_SESSION['function_number']) {
-      $_SESSION['function_number'] = count($_SESSION['function']);
-
-      // Flush all because there is a new function in the stack.
-      drupal_flush_all_caches();
-    }
-  }
+  $_SESSION['inline_devel_cc'] = FALSE;
 }
 
 /**
  * Build the functions in the stack.
  */
 function _inline_devel_run_sessioned_functions() {
-  if ($_SESSION['function_number'] == 0) {
-    return;
-  }
   if (isset($_SESSION['function']) && !empty($_SESSION['function'])) {
     foreach ($_SESSION['function'] as $function) {
       eval('function ' . $function['function'] . '(' . $function['arguments'] . ') {

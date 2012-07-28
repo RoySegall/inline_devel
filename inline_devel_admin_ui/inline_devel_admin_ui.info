@@ -4,4 +4,7 @@ package = Development
 core = 7.x
 
 tags[] = developer
-dependencies[] = devel
+dependencies[] = inline_devel
+
+files[] = ../includes/inline_devel_tests.inc
+files[] = inline_devel_admin_ui.test
