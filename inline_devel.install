@@ -12,6 +12,7 @@ function inline_devel_install() {
   variable_set('esc_enable', TRUE);
   variable_set('spaces_instead_of_tabs', TRUE);
   variable_set('number_of_spaces', 2);
+  variable_set('show_colored_code', FALSE);
 }
 
 /**
@@ -22,4 +23,5 @@ function inline_devel_uninstall() {
   variable_del('esc_enable');
   variable_del('spaces_instead_of_tabs');
   variable_del('number_of_spaces');
+  variable_del('show_colored_code');
 }

@@ -251,6 +251,7 @@ function inline_devel_generate_item_push(val) {
 setInterval(function() {
   if (($("#edit-code").val() != null && $("#edit-code").val().length == 0) || $("#suggestion div.function").length == 0) {
     inline_devel_close_suggestor();
+    $(".suggestion-wrapper").removeClass('border-up');
   }
 }, 1);
 
@@ -357,6 +358,7 @@ Drupal.behaviors.functionLoad = {
 
         // Show the functions name area and add class.
         functionsName.show().addClass('bordered');
+        $(".suggestion-wrapper").addClass('border-up');
 
         // Build the array of function to divs.
         $.each(data, function(key, val) {
@@ -474,6 +476,30 @@ Drupal.behaviors.keyBoardEvents = {
         data.elem.selectionStart = cursor + inline_devel_settings.number_of_spaces;
         data.elem.selectionEnd = cursor + inline_devel_settings.number_of_spaces;
       }
+    });
+  }
+}
+
+/**
+ * General UI handling.
+ */
+Drupal.behaviors.generalUI = {
+  attach: function() {
+
+    if ($(".colored-code").css('display') != undefined && $("#console").css('dislay') == null) {
+      $("#console").hide();
+    }
+
+    $(".colored-code").hover(function() {
+      $(".textarea-link").show();
+    },
+    function() {
+      $(".textarea-link").hide();
+    });
+
+    $(".colored-code a.textarea-link").click(function() {
+      $("div.colored-code").hide('slow');
+      $("#console").show();
     });
   }
 }

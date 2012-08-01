@@ -53,19 +53,30 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   // Load the default settings into the js.
   _inline_devel_load_settings_to_js();
 
+  if (isset($_SESSION['code']) and !empty($_SESSION['code']) && variable_get('show_colored_code', FALSE)) {
+    $form['execute']['code']['#prefix'] = 
+      "<div class='colored-code'><a href='#' class='textarea-link'>" . t('Show textarea/hide colored code') . "</a><br />" . 
+        highlight_string("<?php \n" . $_SESSION['code'], TRUE) .
+      "</div>";
+  }
+
+  $_SESSION['code'] = '';
+
   // Add the js and css file.
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel_api.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 
   // Add div beneath the form.
-  $form['execute']['code']['#description'] = "<div class='suggestion' id='suggestion'></div>" . $form['execute']['code']['#description'];
+  $form['execute']['code']['#title'] .= ', ' . $form['execute']['code']['#description'];
+  $form['execute']['code']['#description'] = "<div class='suggestion-wrapper'><div class='suggestion' id='suggestion'></div></div>";
 
   // Verify we don't declare the same function.
   $form['#validate'][] = 'inline_devel_prevent_redeclare';
 
   // Adding function that check if you a user entered a hook.
   $form['#submit'][] = 'inline_devel_form_submit_register_hook';
+  $form['#submit'][] = 'inline_devel_colored_code';
 }
 
 /**
@@ -116,6 +127,10 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
   drupal_set_message(t('The function @function-name inserted successfully to the functions stack.', array(
     '@function-name' => $functions[1],
   )));
+}
+
+function inline_devel_colored_code($form, $form_state) {
+  $_SESSION['code'] = $form_state['values']['code'];
 }
 
 /**

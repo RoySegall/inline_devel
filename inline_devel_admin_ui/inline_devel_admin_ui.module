@@ -11,15 +11,18 @@ function inline_devel_admin_ui_menu() {
   $items = array();
 
   $default_task = array(
-    'title' => 'Temporary hooks',
     'description' => 'Manage here your defined hooks via the inline devel module',
     'access arguments' => array('access devel information'),
     'page callback' => 'inline_devel_admin_ui_session_manage',
     'weight' => 0,
   );
 
-  $items['admin/structure/inline_devel_admin'] = $default_task;
+  $items['admin/structure/inline_devel_admin'] = $default_task + array(
+    'title' => 'Inline Devel',
+    'type' => MENU_LOCAL_TASK,
+  );
   $items['admin/structure/inline_devel_admin/hooks'] = $default_task + array(
+    'title' => 'Temporary hooks',
     'type' => MENU_LOCAL_TASK,
   );
 
@@ -29,8 +32,8 @@ function inline_devel_admin_ui_menu() {
     'access arguments' => array('access devel information'),
   );
 
-  $items['admin/structure/inline_devel_admin/shotcuts'] = array(
-    'title' => 'Shortcuts',
+  $items['admin/structure/inline_devel_admin/settings'] = array(
+    'title' => 'Settings',
     'description' => 'Manage here your defined hooks via the inline devel module',
     'access arguments' => array('access devel information'),
     'page callback' => 'drupal_get_form',
@@ -141,6 +144,13 @@ function inline_devel_admin_ui_shorcuts_manage() {
     '#default_value' => variable_get('number_of_spaces', 2),
     '#prefix' => '<div id="number_of_spaces">',
     '#suffix' => '</div>',
+  );
+
+  $form['show_colored_code'] = array(
+    '#title' => t('Display the posted code in a highlighted format?'),
+    '#description' => t('The code will be diplayed in a colored text.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('show_colored_code', FALSE),
   );
 
   return system_settings_form($form);
