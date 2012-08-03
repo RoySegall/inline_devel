@@ -137,7 +137,13 @@ function inline_devel_colored_code($form, $form_state) {
  * Get list of hooks.
  */
 function inline_devel_get_list_of_hooks() {
-  $dirs = array('includes', 'modules', 'sites');
+  $dirs = array(
+    'includes',
+    'modules',
+    'sites',
+    'profiles',
+  );
+
   $files = array();
   foreach ($dirs as $dir) {
     inline_devel_get_all_files($dir, $files);
