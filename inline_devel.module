@@ -34,6 +34,12 @@ function inline_devel_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  $items['devel/php/variable_suggestor'] = array(
+    'page callback' => 'inline_devel_variables_list',
+    'access arguments' => array('access devel information'),
+    'type' => MENU_CALLBACK,
+  );
+
   return $items;
 }
 
@@ -44,6 +50,23 @@ function inline_devel_php_functions($text) {
   $functions = inline_devel_get_relevent_functions($text);
 
   drupal_json_output($functions);
+}
+
+/**
+ * Menu callback - print out JSON format of avialable variables.
+ */
+function inline_devel_variables_list($text) {
+  // Getting the cached variables list and bold the searched strings.
+  $list = array();
+  foreach (inline_devel_get_list_of_variables() as $module => $variables) {
+    foreach ($variables as $variable) {
+      if (strpos($variable, $text) === 0 || strpos($module, $text) === 0) {
+        $list[$variable] = str_replace($text, "<b>" . $text . "</b>", $module . ": " . $variable);
+      }
+    }
+  }
+
+  drupal_json_output(array_unique($list));
 }
 
 /**
@@ -67,9 +90,19 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
   $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 
-  // Add div beneath the form.
   $form['execute']['code']['#title'] .= ', ' . $form['execute']['code']['#description'];
   $form['execute']['code']['#description'] = "<div class='suggestion-wrapper'><div class='suggestion' id='suggestion'></div></div>";
+  $form['execute']['code']['#weight'] = 2;
+  $form['execute']['op']['#weight'] = 1;
+
+  // Variasbles auto complete.
+  $form['execute']['variables'] = array(
+    '#type' => 'textfield',
+    '#autocomplete_path' => 'devel/php/variable_suggestor',
+    '#suffix' => '<div id="variable_suggestor"></div>',
+    '#weight' => 0,
+    '#size' => 25,
+  );
 
   // Verify we don't declare the same function.
   $form['#validate'][] = 'inline_devel_prevent_redeclare';
@@ -78,7 +111,6 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['#submit'][] = 'inline_devel_form_submit_register_hook';
   $form['#submit'][] = 'inline_devel_colored_code';
 }
-
 /**
  * Validate function to prevent redeclare the same function name.
  */
@@ -137,19 +169,7 @@ function inline_devel_colored_code($form, $form_state) {
  * Get list of hooks.
  */
 function inline_devel_get_list_of_hooks() {
-  $dirs = array(
-    'includes',
-    'modules',
-    'sites',
-    'profiles',
-  );
-
-  $files = array();
-  foreach ($dirs as $dir) {
-    inline_devel_get_all_files($dir, $files);
-  }
-
-  foreach ($files as $file) {
+  foreach (_inline_devel_get_files() as $file) {
     // Start processing.
     $content = @file_get_contents($file);
 
@@ -175,6 +195,58 @@ function inline_devel_get_list_of_hooks() {
   }
 
   return array_unique($hooks);
+}
+
+/**
+ * Get all defined variables from the files and their defined module.
+ */
+function inline_devel_get_list_of_variables() {
+  if ($cache = cache_get('inline_devel_variable_list')) {
+    $hooks = $cache->data;
+  }
+  else {
+    foreach (_inline_devel_get_files() as $file) {
+      // Start processing.
+      $content = @file_get_contents($file);
+
+      if (!$content) {
+        continue;
+      }
+
+      $avaiable_variables = array_keys(variable_initialize());
+
+      if (preg_match_all("/variable_get\((.*?), (.*?)\);/ismx", $content, $arr)) {
+        foreach ($arr[1] as $hook) {
+          if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
+            if (!in_array($name, $avaiable_variables)) {
+              continue;
+            }
+
+            if (strpos($file, 'includes/') === 0) {
+              $type = 'bootstrap';
+            }
+            else {
+              $file_keys = explode('/', $file);
+              if (strpos($file, 'modules/') === 0) {
+                $type = $file_keys[1];
+              }
+              else {
+                $type = $file_keys[3];
+              }
+            }
+
+            if (!empty($hooks[$type]) && in_array($name, $hooks[$type])) {
+              continue;
+            }
+            $hooks[$type][] = $name;
+          }
+        }
+      }
+    }
+    cache_set('inline_devel_variable_list', $hooks, 'cache');
+  }
+
+  return $hooks;
 }
 
 /**
@@ -212,7 +284,7 @@ function inline_devel_get_relevent_functions($funcion_name) {
 
   $functions = get_defined_functions();
 
-  if ($cache = cache_get('function_list')) {
+  if ($cache = cache_get('inline_devel_function_list')) {
     $scope = $cache->data;
   }
   else {
@@ -223,7 +295,7 @@ function inline_devel_get_relevent_functions($funcion_name) {
       'hooks' => inline_devel_get_list_of_hooks(),
     );
 
-    cache_set('function_list', $scope, 'cache');
+    cache_set('inline_devel_function_list', $scope, 'cache');
   }
 
 
@@ -312,4 +384,23 @@ function _inline_devel_load_settings_to_js() {
       'type' => 'setting',
     )
   );
+}
+
+/**
+ * Return list of files that related to the modules functionallty.
+ */
+function _inline_devel_get_files() {
+  $dirs = array(
+    'includes',
+    'modules',
+    'sites',
+    'profiles',
+  );
+
+  $files = array();
+  foreach ($dirs as $dir) {
+    inline_devel_get_all_files($dir, $files);
+  }
+
+  return $files;
 }

@@ -3,9 +3,7 @@
 }
 
 #edit-op {
-  position: absolute !important;
-  right: 0px;
-  top: 0px;
+  float: right;
   color: #fff;
   padding: 8px 14px 10px;
   background: #B3A400;
@@ -60,6 +58,11 @@
   border: #5893AC solid 1px;
 }
 
+.form-type-textfield.form-item-variables {
+  float: right;
+  padding-left: 15px;
+  display: none;
+}
 .bordered {
   background: #EBF4FA;
   border-bottom: none;

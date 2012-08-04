@@ -148,17 +148,19 @@ function inline_devel_insert_element_propperly(element_id, last_word, word, type
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  if (jQuery.inArray(type, Array('class', 'interface')) != -1) {
+  if (jQuery.inArray(type, Array('class', 'interface', 'variable')) != -1) {
     var chr = '';
+    var bck = 0;
   }
   else {
-   var chr = '(';
+   var chr = '()';
+   var bck = 1;
   }
 
   $("#" + element_id).val(data.value.slice(0, start) + word + chr + data.value.slice(end));
 
   // Put the cursor in the after the string we put into the textarea.
-  data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 2;
+  data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 2 - bck;
 }
 
 /**
@@ -473,8 +475,8 @@ Drupal.behaviors.keyBoardEvents = {
 
         // Insert white spaces and string manipulations.
         $("#edit-code").val(data.value.slice(0, data.elem.selectionStart) + white_space + data.value.slice(data.elem.selectionEnd));
-        data.elem.selectionStart = cursor + inline_devel_settings.number_of_spaces;
-        data.elem.selectionEnd = cursor + inline_devel_settings.number_of_spaces;
+        data.elem.selectionStart = cursor + white_space.length;
+        data.elem.selectionEnd = cursor + white_space.length;
       }
     });
   }
@@ -500,6 +502,44 @@ Drupal.behaviors.generalUI = {
     $(".colored-code a.textarea-link").click(function() {
       $("div.colored-code").hide('slow');
       $("#console").show();
+    });
+  }
+}
+
+/**
+ * Variable suggestor.
+ */
+Drupal.behaviors.variableSuggestor = {
+  attach: function() {
+    $(document).keydown(function(event) {
+      if (event.ctrlKey == true  && event.shiftKey == true && event.which == 86) {
+        event.preventDefault();
+
+        if ($(".form-type-textfield.form-item-variables").css('display') == 'none') {
+          $(".form-type-textfield.form-item-variables").show(500);
+        }
+        else {
+          $(".form-type-textfield.form-item-variables").hide(500);
+        }
+
+        $("#edit-variables").val('');
+        $("#edit-variables").focus();      }
+    });
+    
+    $("#edit-variables").keydown(function(keyPressed) {
+      if (keyPressed.which == 13) {
+        keyPressed.preventDefault();
+        var data = _inline_devel_textarea_helper('edit-code');
+        var cursor = data.elem.selectionStart;
+
+        $("#edit-code").focus();
+
+        $("#edit-code").val(data.value.slice(0, data.elem.selectionStart) + "variable_get('" + $(this).val() + "')" + data.value.slice(data.elem.selectionEnd));
+        data.elem.selectionStart = cursor + 14 + $(this).val().length + 2;
+        data.elem.selectionEnd = cursor + 14 + $(this).val().length + 2;
+        
+        $(".form-type-textfield.form-item-variables").hide(500);
+      }
     });
   }
 }
