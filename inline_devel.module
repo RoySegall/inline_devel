@@ -15,7 +15,7 @@ function inline_devel_init() {
   _inline_devel_run_sessioned_functions();
 
   // For some reason, when we decalre inline_devel_dummy_module_init the
-  // functoin is not implemented well. 
+  // functoin is not implemented well.
   if (function_exists('inline_devel_dummy_module_init')) {
     inline_devel_dummy_module_init();
   }
@@ -58,10 +58,15 @@ function inline_devel_php_functions($text) {
 function inline_devel_variables_list($text) {
   // Getting the cached variables list and bold the searched strings.
   $list = array();
-  foreach (inline_devel_get_list_of_variables() as $module => $variables) {
+  $variables_value = array();
+  $variables_lists = inline_devel_get_list_of_variables($variables_value);
+
+  foreach ($variables_lists as $module => $variables) {
     foreach ($variables as $variable) {
       if (strpos($variable, $text) === 0 || strpos($module, $text) === 0) {
-        $list[$variable] = str_replace($text, "<b>" . $text . "</b>", $module . ": " . $variable);
+        $variable_value = !empty($variables_value[$variable]) ? $variables_value[$variable] : t('Emtpy');
+        $variable_text =  $module . ": " . $variable . "(" . $variable_value .")";
+        $list[$variable] = str_replace($text, "<b>" . $text . "</b>", $variable_text);
       }
     }
   }
@@ -77,8 +82,8 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   _inline_devel_load_settings_to_js();
 
   if (isset($_SESSION['code']) and !empty($_SESSION['code']) && variable_get('show_colored_code', FALSE)) {
-    $form['execute']['code']['#prefix'] = 
-      "<div class='colored-code'><a href='#' class='textarea-link'>" . t('Show textarea/hide colored code') . "</a><br />" . 
+    $form['execute']['code']['#prefix'] =
+      "<div class='colored-code'><a href='#' class='textarea-link'>" . t('Show textarea/hide colored code') . "</a><br />" .
         highlight_string("<?php \n" . $_SESSION['code'], TRUE) .
       "</div>";
   }
@@ -199,8 +204,11 @@ function inline_devel_get_list_of_hooks() {
 
 /**
  * Get all defined variables from the files and their defined module.
+ *
+ *  @param Array $variable
+ *    A by ref variable that will receive the value of the variables list.
  */
-function inline_devel_get_list_of_variables() {
+function inline_devel_get_list_of_variables(&$variables) {
   if ($cache = cache_get('inline_devel_variable_list')) {
     $hooks = $cache->data;
   }
@@ -213,12 +221,12 @@ function inline_devel_get_list_of_variables() {
         continue;
       }
 
-      $avaiable_variables = array_keys(variable_initialize());
-
+      $variables = variable_initialize();
+      $variables_keys = array_keys($variables);
       if (preg_match_all("/variable_get\((.*?), (.*?)\);/ismx", $content, $arr)) {
         foreach ($arr[1] as $hook) {
           if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
-            if (!in_array($name, $avaiable_variables)) {
+            if (!in_array($name, $variables_keys)) {
               continue;
             }
 
