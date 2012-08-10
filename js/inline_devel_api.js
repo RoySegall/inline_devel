@@ -1,3 +1,10 @@
+/**
+ * @file
+ * This is the api function for the IDTD.
+ *
+ * TODO: Move most of the functions to here and make a better api.
+ */
+
 (function ($) {
   jQuery.fn.getCursorPosition = function() {
     var el = $(this).get(0);

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * This is the js file for the Inline devel text decoder AKA IDTD.
+ */
+
 (function ($) {
 
 //-----------------------------------------------
@@ -268,9 +273,63 @@ Drupal.behaviors.functionLoad = {
     var prevSearch = '';
     var currentFunction = 0;
 
-    // Each key press.
-    textarea.keydown(function(keyPressed) {
+    // Dividing to two separate keyboard events for two reasons:
+    // 1. Keyup detect immediately keypress but not handle with preventDefault
+    // 2. Functions that worked well under keydown not working as weel under
+    //    keyup event.
+    textarea.keyup(function(event) {
+      // When browsing in function, don't continue to the next steps.
+      if (prevSearch == textarea.val()) {
+        return;
+      }
 
+      // Start checking from the server the available functions name.
+      var keyword = inline_devel_get_last_word('edit-code');
+      $.getJSON('?q=devel/php/inline_devel/' + keyword, function(data) {
+        var items = [];
+        haveFunction = true;
+        currentFunction = 0;
+
+        // Show the functions name area and add class.
+        functionsName.show().addClass('bordered');
+        $(".suggestion-wrapper").addClass('border-up');
+
+        // Build the array of function to divs.
+        $.each(data, function(key, val) {
+          // When you write down the word function - suggest only hooks().
+          var exploded_row = inline_devel_get_current_line('edit-code').split(" ");
+          var row_begining = exploded_row[0];
+          var row_middle = exploded_row[2];
+
+          var shown = false;
+
+          // We have the word class/function at the begining.
+          if (jQuery.inArray(row_begining, Array('class', 'function')) > -1) {
+            if (row_begining == 'function' && val.type == 'hooks') {
+              items.push(inline_devel_generate_item_push(val));
+            }
+            else if (row_begining == 'class' && row_middle == 'extends' && val.type == 'class') {
+              items.push(inline_devel_generate_item_push(val));
+            }
+
+            var shown = true;
+          }
+
+          // We didn't shown any thing, present all options.
+          if (shown == false) {
+            // Show all the available functions.
+            items.push(inline_devel_generate_item_push(val));
+          }
+        });
+
+        // Insert the html.
+        functionsName.html(items.join(''));
+
+        // Set the prevSearch variable to this serach. This preventing
+        // meaningless refreshing of the suggestor.
+        prevSearch = textarea.val();
+      });
+    }).keydown(function(keyPressed) {
       $.keyNumber = keyPressed.which;
       var selectedDiv = $("#suggestion .selected-function");
       var availableFunctionNumber = $("#suggestion div.function").length;
@@ -338,64 +397,12 @@ Drupal.behaviors.functionLoad = {
         return;
       }
 
-      // When browsing in function, don't continue to the next steps.
-      if (prevSearch == textarea.val()) {
-        return;
-      }
-
       // Hide the functions name area because there is no text.
       if (textarea.val().length == 0) {
         functionsName.removeClass('bordered');
         functionsName.hide();
         return;
       }
-
-      // Start checking from the server the available functions name.
-      var keyword = inline_devel_get_last_word('edit-code');
-
-      $.getJSON('?q=devel/php/inline_devel/' + keyword, function(data) {
-        var items = [];
-        haveFunction = true;
-        currentFunction = 0;
-
-        // Show the functions name area and add class.
-        functionsName.show().addClass('bordered');
-        $(".suggestion-wrapper").addClass('border-up');
-
-        // Build the array of function to divs.
-        $.each(data, function(key, val) {
-          // When you write down the word function - suggest only hooks().
-          var exploded_row = inline_devel_get_current_line('edit-code').split(" ");
-          var row_begining = exploded_row[0];          var row_middle = exploded_row[2];
-          
-          var shown = false;
-
-          // We have the word class/function at the begining.
-          if (jQuery.inArray(row_begining, Array('class', 'function')) > -1) {
-            if (row_begining == 'function' && val.type == 'hooks') {
-              items.push(inline_devel_generate_item_push(val));
-            }
-            else if (row_begining == 'class' && row_middle == 'extends' && val.type == 'class') {
-              items.push(inline_devel_generate_item_push(val));
-            }
-
-            var shown = true;
-          }
-
-          // We didn't shown any thing, present all options.
-          if (shown == false) {
-            // Show all the available functions.
-            items.push(inline_devel_generate_item_push(val));
-          }
-        });
-
-        // Insert the html.
-        functionsName.html(items.join(''));
-
-        // Set the prevSearch variable to this serach. This preventing
-        // meaningless refreshing of the suggestor.
-        prevSearch = textarea.val();
-      });
     });
   }
 }
