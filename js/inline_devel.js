@@ -153,9 +153,15 @@ function inline_devel_insert_element_propperly(element_id, last_word, word, type
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  if (jQuery.inArray(type, Array('class', 'interface', 'variable')) != -1) {
+  if (jQuery.inArray(type, Array('interface', 'variable')) != -1) {
     var chr = '';
     var bck = 0;
+  }
+  else if (type == 'class_function' ) {
+    var variable = last_word.split('->')[0];
+    word = variable + '->' + word + '()';
+    chr = '';
+    bck = 0;
   }
   else {
    var chr = '()';
@@ -250,8 +256,24 @@ function inline_devel_break_on_reserved(element_id) {
 function inline_devel_generate_item_push(val) {
   return "<div class='function' name='" + val.name + "' id='" + val.id + "' type='" + val.type + "'>" + val.name + " (" + val.type + ")</div>";
 }
+
+function inline_devel_return_classes() {
+  // Breaking the rows.
+  var rows = $('#edit-code').val().split("\n");
+  var classes = new Array();
+
+  $.each(rows, function(key, value) {
+    if (value.indexOf('new') != -1) {
+      var splited = value.split(/\s/g);
+      classes[key] = new Array(splited[0], splited[3].replace('()', ''));
+    }
+  });
+
+  return classes;
+}
+
 //-----------------------------------------------
-//  Events handling.
+//  Every second functionality.
 //-----------------------------------------------
 
 // Hide the suggestor when there no letters or no functions.
@@ -261,6 +283,10 @@ setInterval(function() {
     $(".suggestion-wrapper").removeClass('border-up');
   }
 }, 1);
+
+//-----------------------------------------------
+//  Events handling.
+//-----------------------------------------------
 
 // The core of the inline devel js functionality area.
 Drupal.behaviors.functionLoad = {
@@ -285,7 +311,22 @@ Drupal.behaviors.functionLoad = {
 
       // Start checking from the server the available functions name.
       var keyword = inline_devel_get_last_word('edit-code');
-      $.getJSON('?q=devel/php/inline_devel/' + keyword, function(data) {
+      var address = '?q=devel/php/inline_devel/' + keyword;
+
+      // Check if we need to search in classes.
+      if (keyword.indexOf('->') != -1) {
+        var variable = keyword.split('->')[0].replace(/^\s+|\s+$/g,"");
+        $.each(inline_devel_return_classes(), function(key, value) {
+          if (value[0] == variable) {
+            var class_name = value[1].replace(';',"").replace('()',"");
+
+            address = '?q=devel/php/inline_devel/get_classes/' + keyword.split('->')[1].replace(/^\s+|\s+$/g,"") + '/' + class_name;
+            return true;
+          }
+        });
+      }
+
+      $.getJSON(address, function(data) {
         var items = [];
         haveFunction = true;
         currentFunction = 0;
@@ -297,18 +338,18 @@ Drupal.behaviors.functionLoad = {
         // Build the array of function to divs.
         $.each(data, function(key, val) {
           // When you write down the word function - suggest only hooks().
-          var exploded_row = inline_devel_get_current_line('edit-code').split(" ");
+          var exploded_row = inline_devel_get_current_line('edit-code').replace("\n", '').split(/\s/g);
           var row_begining = exploded_row[0];
           var row_middle = exploded_row[2];
 
           var shown = false;
 
           // We have the word class/function at the begining.
-          if (jQuery.inArray(row_begining, Array('class', 'function')) > -1) {
-            if (row_begining == 'function' && val.type == 'hooks') {
+          if (jQuery.inArray(row_begining, Array('class', 'function')) > -1 || row_begining.indexOf('$') == 0) {
+            if (exploded_row[0] == 'function' && val.type == 'hooks') {
               items.push(inline_devel_generate_item_push(val));
             }
-            else if (row_begining == 'class' && row_middle == 'extends' && val.type == 'class') {
+            else if ((row_begining == 'class' || row_begining.indexOf('$') == 0) && (jQuery.inArray(row_middle, Array('new', 'extends')) > -1) && val.type == 'class') {
               items.push(inline_devel_generate_item_push(val));
             }
 

@@ -6,6 +6,16 @@
  */
 
 (function ($) {
+  // Variables.
+  $.keyNumber = 0;
+  $.cursor = 0;
+  $.speicalChars = Array(
+    " ", '(', ')', ';'
+  );
+
+  /**
+   * Returning the current position by the caret.
+   */
   jQuery.fn.getCursorPosition = function() {
     var el = $(this).get(0);
     var pos = 0;
@@ -22,12 +32,5 @@
 
     return pos;
   }
-
-  // Variables.
-  $.keyNumber = 0;
-  $.cursor = 0;
-  $.speicalChars = Array(
-    " ", '(', ')', ';'
-  );
 
 })(jQuery);

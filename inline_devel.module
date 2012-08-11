@@ -34,8 +34,15 @@ function inline_devel_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['devel/php/variable_suggestor'] = array(
+  $items['devel/php/inline_devel/variable_suggestor'] = array(
     'page callback' => 'inline_devel_variables_list',
+    'access arguments' => array('access devel information'),
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['devel/php/inline_devel/get_classes/%/%'] = array(
+    'page callback' => 'inline_devel_get_classes',
+    'page arguments' => array(4,5),
     'access arguments' => array('access devel information'),
     'type' => MENU_CALLBACK,
   );
@@ -75,6 +82,28 @@ function inline_devel_variables_list($text) {
 }
 
 /**
+ * Menu callback - return list of function that belong to the class.
+ */
+function inline_devel_get_classes($function, $class) {
+  $methods = get_class_methods($class);
+  $i = 0;
+  $output_functions = array();
+
+  $i = 0;
+  foreach ($methods as $method) {
+    if (strpos(strtolower($method), strtolower($function)) === 0) {
+      $output_functions[] = array(
+        'id' => $i++,
+        'name' => $method,
+        'type' => 'class_function',
+      );
+    }
+  }
+
+  drupal_json_output($output_functions);
+}
+
+/**
  * Implements hook_form_FORM_ID_alter().
  */
 function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
@@ -103,7 +132,7 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   // Variasbles auto complete.
   $form['execute']['variables'] = array(
     '#type' => 'textfield',
-    '#autocomplete_path' => 'devel/php/variable_suggestor',
+    '#autocomplete_path' => 'devel/php/inline_devel/variable_suggestor',
     '#suffix' => '<div id="variable_suggestor"></div>',
     '#weight' => 0,
     '#size' => 25,
