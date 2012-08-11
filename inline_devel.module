@@ -441,3 +441,35 @@ function _inline_devel_get_files() {
 
   return $files;
 }
+
+/**
+ * Get the function arguments.
+ *
+ *  @param String $function_name
+ *    The function name you would like to get the arguments.
+ *
+ *  @param Boolean $alert
+ *    The function name you would like to get the arguments.
+ *
+ *  @return array with list of arguments.
+ */
+function _inline_devel_get_function_arguments($function_name, $alert = FALSE) {
+  if (!function_exists($function_name)) {
+    if ($alert) {
+      $param = array(
+        '@name' => $function_name,
+      );
+      drupal_set_message(t('The function @name is not exists.', $param), 'error');
+    }
+    return;
+  }
+
+  $args = array();
+  $function = new ReflectionFunction($function_name);
+
+  foreach ($function->getParameters() as $arguments) {
+    $args[] = $arguments->name;
+  }
+
+  return $args;
+}
