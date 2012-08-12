@@ -147,31 +147,31 @@ function inline_devel_get_last_word(element_id) {
  *  @param type
  *    The type of the element we inserting: function, class iterface or hook.
  */
-function inline_devel_insert_element_propperly(element_id, last_word, word, type) {
+function inline_devel_insert_element_propperly(element_id, last_word, element_source) {
   var data = _inline_devel_textarea_helper(element_id);
 
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
-  if (jQuery.inArray(type, Array('interface', 'variable')) != -1) {
+  if (jQuery.inArray($(element_source).attr('type'), Array('interface', 'variable')) != -1) {
     var chr = '';
     var bck = 0;
   }
-  else if (type == 'class_function' ) {
+  else if ($(element_source).attr('type') == 'class_function' ) {
     var variable = last_word.split('->')[0];
     word = variable + '->' + word + '()';
     chr = '';
     bck = 0;
   }
   else {
-   var chr = '()';
+   var chr = '(' + $(element_source).attr('arguments') + ')';
    var bck = 1;
   }
 
-  $("#" + element_id).val(data.value.slice(0, start) + word + chr + data.value.slice(end));
+  $("#" + element_id).val(data.value.slice(0, start) + $(element_source).attr('name') + chr + data.value.slice(end));
 
   // Put the cursor in the after the string we put into the textarea.
-  data.elem.selectionStart = data.elem.selectionEnd = start + word.length + 2 - bck;
+  data.elem.selectionStart = data.elem.selectionEnd = start + $(element_source).attr('name').length + 2 - bck;
 }
 
 /**
@@ -228,7 +228,7 @@ function inline_devel_break_on_reserved(element_id) {
     'global', 'goto', 'implements', 'include', 'include_once',
     'instanceof', 'insteadof', 'interface', 'namespace', 'new', 'or',
     'private', 'protected', 'public', 'require', 'require_once', 'static',
-    'var', 'throw', 'trait', 'try', 'unset', 'use', 'var', 'xor'
+    'throw', 'trait', 'try', 'unset', 'use', 'xor'
   );
 
   var smart_split = line.split(/\s/g);
@@ -254,7 +254,7 @@ function inline_devel_break_on_reserved(element_id) {
  *    inside the suggestor.
  */
 function inline_devel_generate_item_push(val) {
-  return "<div class='function' name='" + val.name + "' id='" + val.id + "' type='" + val.type + "'>" + val.name + " (" + val.type + ")</div>";
+  return "<div class='function' arguments='" + val.arguments + "' name='" + val.name + "' id='" + val.id + "' type='" + val.type + "'>" + val.name + " (" + val.type + ")</div>";
 }
 
 function inline_devel_return_classes() {
@@ -427,7 +427,7 @@ Drupal.behaviors.functionLoad = {
 
       if ($.keyNumber == 13 && divElement.html()) {
         // Insert data properly.
-        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement.attr('name'), divElement.attr('type'));
+        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement);
 
         // Don't break row.
         keyPressed.preventDefault();
@@ -464,7 +464,7 @@ Drupal.behaviors.liveEvents = {
     $("#suggestion .function").live("click", function(event) {
       var id = (event).srcElement.id;
       // Insert data propperly.
-      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id).attr('name'), $("#suggestion .function#" + id).attr('type'));
+      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id));
 
       // Don't break row.
       $("#suggestion .function").removeClass('selected-function');

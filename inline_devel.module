@@ -342,10 +342,17 @@ function inline_devel_get_relevent_functions($funcion_name) {
   foreach ($scope as $type => $functions) {
     foreach ($functions as $function) {
       if (strpos(strtolower($function), strtolower($funcion_name)) === 0) {
+        $arguments = _inline_devel_get_function_arguments($function, FALSE, TRUE);
+
+        if (!empty($arguments)) {
+          $arguments = implode(", ", $arguments);
+        }
+
         $output_functions[] = array(
           'id' => $i++,
           'name' => $function,
           'type' => $type,
+          'arguments' => $arguments,
         );
       }
     }
@@ -450,10 +457,13 @@ function _inline_devel_get_files() {
  *
  *  @param Boolean $alert
  *    The function name you would like to get the arguments.
+  *
+ *  @param Boolean $doller
+ *    Add the doller sign near to every argument name.
  *
  *  @return array with list of arguments.
  */
-function _inline_devel_get_function_arguments($function_name, $alert = FALSE) {
+function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $doller = FALSE) {
   if (!function_exists($function_name)) {
     if ($alert) {
       $param = array(
@@ -468,7 +478,7 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE) {
   $function = new ReflectionFunction($function_name);
 
   foreach ($function->getParameters() as $arguments) {
-    $args[] = $arguments->name;
+    $args[] = $doller ? "$" . $arguments->name : $arguments->name;
   }
 
   return $args;
