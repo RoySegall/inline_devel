@@ -91,11 +91,18 @@ function inline_devel_get_classes($function, $class) {
 
   $i = 0;
   foreach ($methods as $method) {
-    if (strpos(strtolower($method), strtolower($function)) === 0) {
+    if ((strpos(strtolower($method), strtolower($function)) === 0) xor empty($function)) {
+        $arguments = _inline_deve_get_class_method_paramaters($class, $method, FALSE, TRUE);
+
+        if (!empty($arguments)) {
+          $arguments = implode(", ", $arguments);
+        }
+
       $output_functions[] = array(
         'id' => $i++,
         'name' => $method,
         'type' => 'class_function',
+        'arguments' => $arguments,
       );
     }
   }
@@ -476,8 +483,60 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $d
 
   $args = array();
   $function = new ReflectionFunction($function_name);
+  
+  dpm($function);
 
-  foreach ($function->getParameters() as $arguments) {
+  return _inline_devel_function_arguments_to_array($function, $doller);
+}
+
+/**
+ * Get the class methods parmaters function.
+ */
+function _inline_deve_get_class_method_paramaters($class_name, $method_name, $alert = FALSE, $doller = FALSE) {
+  // Check first if the methos and/or class exists.
+  if (!class_exists($class_name) || !method_exists($class_name, $method_name)) {
+    if ($alert) {
+      if (!class_exists($class_name)) {
+        $params = array(
+          '@name' => $class_name,
+        );
+        drupal_set_message(t('The class name @name not exists', $params), 'error');
+      }
+
+      if (!method_exists($class_name, $method_name)) {
+        $params = array(
+          '@class' => $class_name, 
+          '@method' => $method_name
+        );
+        drupal_set_message(t('The @class::@method is not exists', $params), 'error');
+      }
+
+      if (!empty($params)) {
+        return;
+      }
+    }
+  }
+
+  // Build up the parms for the method.
+  $method = new ReflectionMethod($class_name, $method_name);
+
+  return _inline_devel_function_arguments_to_array($method, $doller);
+}
+
+/**
+ * Get the function reflection object and assert arguments to array.
+ * 
+ *  @param ReflectionMethod $reflectionObject
+ *    An instance of a reflection object for class or class method.
+ * 
+ *  @param Boolean $doller
+ *    Add the doller sign near to every argument name.
+ * 
+ *  @return array of arguments function/method.
+ */ 
+function _inline_devel_function_arguments_to_array($reflectionObject, $doller = FALSE) {
+  $args = array();
+  foreach ($reflectionObject->getParameters() as $arguments) {
     $args[] = $doller ? "$" . $arguments->name : $arguments->name;
   }
 

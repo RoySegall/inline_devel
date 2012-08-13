@@ -141,37 +141,47 @@ function inline_devel_get_last_word(element_id) {
  *  @param last_word
  *    The last word that we are standing on.
  *
- *  @param word
- *    The word we need to insert.
+ *  @param element_source
+ *    The element from whom we get the arguments. Need to be a jquery object.
  *
- *  @param type
- *    The type of the element we inserting: function, class iterface or hook.
+ *  @param arguments
+ *    true/false if to put the arguments of the function.
  */
-function inline_devel_insert_element_propperly(element_id, last_word, element_source) {
+function inline_devel_insert_element_propperly(element_id, last_word, element_source, arguments) {
   var data = _inline_devel_textarea_helper(element_id);
 
   var start = data.cursor - last_word.length;
   var end = data.cursor;
 
+  // The location of caret after inserting the word.
+  var hard_location = 0;
+
   if (jQuery.inArray($(element_source).attr('type'), Array('interface', 'variable')) != -1) {
     var chr = '';
     var bck = 0;
+    var word = $(element_source).attr('name');
   }
   else if ($(element_source).attr('type') == 'class_function' ) {
     var variable = last_word.split('->')[0];
-    word = variable + '->' + word + '()';
-    chr = '';
-    bck = 0;
+    var word = variable + '->' + $(element_source).attr('name');
+    var chr = arguments ? '(' + $(element_source).attr('arguments') + ');' : '();';
+
+    hard_location = start + word.length;
   }
   else {
-   var chr = '(' + $(element_source).attr('arguments') + ')';
-   var bck = 1;
+    var word = $(element_source).attr('name');
+    var chr = arguments ? '(' + $(element_source).attr('arguments') + ')' : '()';
+    var bck = 1;
+
+    if (chr == '(null)') {
+      chr = '()';
+    }
   }
 
-  $("#" + element_id).val(data.value.slice(0, start) + $(element_source).attr('name') + chr + data.value.slice(end));
+  $("#" + element_id).val(data.value.slice(0, start) + word + chr + data.value.slice(end));
 
   // Put the cursor in the after the string we put into the textarea.
-  data.elem.selectionStart = data.elem.selectionEnd = start + $(element_source).attr('name').length + 2 - bck;
+  data.elem.selectionStart = data.elem.selectionEnd = hard_location == 0 ? start + $(element_source).attr('name').length + 2 - bck : hard_location;
 }
 
 /**
@@ -352,6 +362,9 @@ Drupal.behaviors.functionLoad = {
             else if ((row_begining == 'class' || row_begining.indexOf('$') == 0) && (jQuery.inArray(row_middle, Array('new', 'extends')) > -1) && val.type == 'class') {
               items.push(inline_devel_generate_item_push(val));
             }
+            else if (row_begining.indexOf('$') == 0 && val.type == 'class_function') {
+              items.push(inline_devel_generate_item_push(val));
+            }
 
             var shown = true;
           }
@@ -425,9 +438,15 @@ Drupal.behaviors.functionLoad = {
         var divElement = selectedDiv;
       }
 
-      if ($.keyNumber == 13 && divElement.html()) {
+      if (($.keyNumber == 13 || $.keyNumber == 32 && keyPressed.ctrlKey) && divElement.html()) {
         // Insert data properly.
-        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement);
+        var arguments = false;
+
+        if ($.keyNumber == 32 && keyPressed.ctrlKey) {
+          var arguments = true;
+        }
+
+        inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), divElement, arguments);
 
         // Don't break row.
         keyPressed.preventDefault();
@@ -464,7 +483,7 @@ Drupal.behaviors.liveEvents = {
     $("#suggestion .function").live("click", function(event) {
       var id = (event).srcElement.id;
       // Insert data propperly.
-      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id));
+      inline_devel_insert_element_propperly('edit-code', inline_devel_get_last_word('edit-code'), $("#suggestion .function#" + id), false);
 
       // Don't break row.
       $("#suggestion .function").removeClass('selected-function');
