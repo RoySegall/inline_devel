@@ -8,4 +8,5 @@ dependencies[] = devel
 dependencies[] = inline_devel_dummy_module
 
 files[] = includes/inline_devel_tests.inc
+files[] = includes/reflection.class.inc
 files[] = inline_devel.test

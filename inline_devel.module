@@ -4,6 +4,7 @@
  * The file for the inline_devel module.
  */
 
+ 
 /**
  * Implements hook_init().
  */
@@ -27,7 +28,6 @@ function inline_devel_init() {
     );
 
     drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel_overlay.js');
-    drupal_add_css(drupal_get_path('module', 'inline_devel') . '/css/inline_devel_overlay.css');
   }
 
   // Flush cache when needed.
@@ -229,7 +229,6 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
 
     // Change the hook prefix name.
     inline_devel_change_hook_prefix($function);
-
     $arguments = _inline_devel_function_arguments_to_array($func, TRUE);
     $arguments = implode(",", $arguments);
 
@@ -496,12 +495,12 @@ function _inline_devel_get_files() {
  *  @param Boolean $alert
  *    The function name you would like to get the arguments.
   *
- *  @param Boolean $doller
+ *  @param Boolean $dollar
  *    Add the doller sign near to every argument name.
  *
  *  @return array with list of arguments.
  */
-function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $doller = FALSE) {
+function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $dollar = FALSE) {
   if (!function_exists($function_name)) {
     if ($alert) {
       $param = array(
@@ -515,13 +514,13 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $d
   $args = array();
   $function = new ReflectionFunction($function_name);
   
-  return _inline_devel_function_arguments_to_array($function, $doller);
+  return _inline_devel_function_arguments_to_array($function, $dollar);
 }
 
 /**
  * Get the class methods parmaters function.
  */
-function _inline_deve_get_class_method_paramaters($class_name, $method_name, $alert = FALSE, $doller = FALSE) {
+function _inline_deve_get_class_method_paramaters($class_name, $method_name, $alert = FALSE, $dollar = FALSE) {
   // Check first if the methos and/or class exists.
   if (!class_exists($class_name) || !method_exists($class_name, $method_name)) {
     if ($alert) {
@@ -549,7 +548,7 @@ function _inline_deve_get_class_method_paramaters($class_name, $method_name, $al
   // Build up the parms for the method.
   $method = new ReflectionMethod($class_name, $method_name);
 
-  return _inline_devel_function_arguments_to_array($method, $doller);
+  return _inline_devel_function_arguments_to_array($method, $dollar);
 }
 
 /**
@@ -558,15 +557,15 @@ function _inline_deve_get_class_method_paramaters($class_name, $method_name, $al
  *  @param ReflectionMethod $reflectionObject
  *    An instance of a reflection object for class or class method.
  * 
- *  @param Boolean $doller
+ *  @param Boolean $dollar
  *    Add the doller sign near to every argument name.
  * 
  *  @return array of arguments function/method.
  */ 
-function _inline_devel_function_arguments_to_array($reflectionObject, $doller = FALSE) {
+function _inline_devel_function_arguments_to_array($reflectionObject, $dollar = FALSE) {
   $args = array();
   foreach ($reflectionObject->getParameters() as $arguments) {
-    $args[] = $doller ? "$" . $arguments->name : $arguments->name;
+    $args[] = $dollar ? "$" . $arguments->name : $arguments->name;
   }
 
   return $args;
