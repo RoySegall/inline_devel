@@ -8,6 +8,28 @@
  * Implements hook_init().
  */
 function inline_devel_init() {
+  // Adding js file for loading the execute form in every page.
+  if (user_access('access devel information')) {
+    // Abolute url of your drupal site.
+    $url = url('', array('absolute' => TRUE));
+
+    // Current path.
+    $q = $_GET['q'];
+
+    // If you in admin page, take you back to front page and overlay above.
+    if (strpos(strtolower($_GET['q']), strtolower('admin/')) === 0) {
+      $q = '';
+    }
+
+    drupal_add_js(
+      array('baseURL' => $url, 'q' => $q,),
+      array('type' => 'setting',)
+    );
+
+    drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel_overlay.js');
+    drupal_add_css(drupal_get_path('module', 'inline_devel') . '/css/inline_devel_overlay.css');
+  }
+
   // Flush cache when needed.
   _inline_devel_clear_cache_when_needed();
 
@@ -160,14 +182,18 @@ function inline_devel_prevent_redeclare(&$form, &$form_state) {
     return;
   }
 
-  $functions = inline_devel_php_parsing($form_state['values']['code']);
+  $functionFinder = '/function[\s\n]+(\S+)[\s\n]*\(/';
+  $functionArray = array();
+  preg_match_all($functionFinder, $form_state['values']['code'], $functionArray);
 
-  if (empty($functions)) {
+  if (empty($functionArray)) {
     return;
   }
 
-  if (isset($_SESSION['function'][$functions[1]])) {
-    unset($_SESSION['function'][$functions[1]]);
+  foreach ($functionArray as $function) {
+    if (isset($_SESSION['function'][$function])) {
+      unset($_SESSION['function'][$function]);
+    }
   }
 }
 
@@ -179,20 +205,40 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
     return;
   }
 
-  $functions = inline_devel_php_parsing($form_state['values']['code']);
+  $functionFinder = '/function[\s\n]+(\S+)[\s\n]*\(/';
+  $functionArray = array();
+  preg_match_all($functionFinder, $form_state['values']['code'], $functionArray);
 
-  if (empty($functions)) {
+  if (empty($functionArray)) {
     return;
   }
 
-  // Change the hook prefix name.
-  inline_devel_change_hook_prefix($functions[1]);
+  $cont = '';
+  $lines = explode("\n", strip_tags($form_state['values']['code']));
 
-  $_SESSION['function'][$functions[1]] = array(
-    'function' => $functions[1],
-    'arguments' => $functions[2],
-    'content' => $functions[3],
-  );
+  foreach ($functionArray[1] as $function) {
+    $func = new ReflectionFunction($function);
+
+    $start = $func->getStartLine();
+    $end = $func->getEndLine();
+    $cont = '';
+
+    for ($i = $start; $i < $end-1; $i++) {
+      $cont .= $lines[$i] ."\n";
+    }
+
+    // Change the hook prefix name.
+    inline_devel_change_hook_prefix($function);
+
+    $arguments = _inline_devel_function_arguments_to_array($func, TRUE);
+    $arguments = implode(",", $arguments);
+
+    $_SESSION['function'][$function] = array(
+      'function' => $function,
+      'arguments' => $arguments,
+      'content' => $cont,
+    );
+  }
 
   $_SESSION['inline_devel_cc'] = TRUE;
 
@@ -369,17 +415,6 @@ function inline_devel_get_relevent_functions($funcion_name) {
 }
 
 /**
- * Use REGEX to tear down functions.
- *
- * TODO: for now, the REGEX recognize only one function at a time, need a way to
- * recognize all functions.
- */
-function inline_devel_php_parsing($code) {
-  preg_match("/function.+?([a-zA-Z0-9_]+?)[\s]*\((.*?)\)[\s]*\{(.+)\}/is", $code, $functions);
-  return array_map("trim", $functions);
-}
-
-/**
  * Rename hook to the inline_devel_dummy_module.
  */
 function inline_devel_change_hook_prefix(&$text) {
@@ -428,12 +463,8 @@ function _inline_devel_load_settings_to_js() {
   }
 
   drupal_add_js(
-    array(
-      'inline_devel' => $settings,
-    ),
-    array(
-      'type' => 'setting',
-    )
+    array('inline_devel' => $settings,),
+    array('type' => 'setting',)
   );
 }
 
@@ -484,8 +515,6 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $d
   $args = array();
   $function = new ReflectionFunction($function_name);
   
-  dpm($function);
-
   return _inline_devel_function_arguments_to_array($function, $doller);
 }
 
