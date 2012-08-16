@@ -10,25 +10,7 @@
  */
 function inline_devel_init() {
   // Adding js file for loading the execute form in every page.
-  if (user_access('access devel information')) {
-    // Abolute url of your drupal site.
-    $url = url('', array('absolute' => TRUE));
-
-    // Current path.
-    $q = $_GET['q'];
-
-    // If you in admin page, take you back to front page and overlay above.
-    if (strpos(strtolower($_GET['q']), strtolower('admin/')) === 0) {
-      $q = '';
-    }
-
-    drupal_add_js(
-      array('baseURL' => $url, 'q' => $q,),
-      array('type' => 'setting',)
-    );
-
-    drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel_overlay.js');
-  }
+  _inline_devel_overlay_devel();
 
   // Flush cache when needed.
   _inline_devel_clear_cache_when_needed();
@@ -441,6 +423,31 @@ function _inline_devel_run_sessioned_functions() {
         ' . $function['content'] . '
       }');
     }
+  }
+}
+
+/**
+ * Adding the shortcut for quick direction to devel form page.
+ */
+function _inline_devel_overlay_devel() {
+  if (user_access('access devel information')) {
+    // Abolute url of your drupal site.
+    $url = url('', array('absolute' => TRUE));
+
+    // Current path.
+    $q = $_GET['q'];
+
+    // If you in admin page, take you back to front page and overlay above.
+    if (strpos(strtolower($_GET['q']), strtolower('admin/')) === 0) {
+      $q = '';
+    }
+
+    drupal_add_js(
+      array('baseURL' => $url, 'q' => $q,),
+      array('type' => 'setting',)
+    );
+
+    drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel_overlay.js');
   }
 }
 
