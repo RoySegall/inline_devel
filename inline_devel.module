@@ -4,7 +4,7 @@
  * The file for the inline_devel module.
  */
 
- 
+
 /**
  * Implements hook_init().
  */
@@ -168,11 +168,11 @@ function inline_devel_prevent_redeclare(&$form, &$form_state) {
   $functionArray = array();
   preg_match_all($functionFinder, $form_state['values']['code'], $functionArray);
 
-  if (empty($functionArray)) {
-    return;
-  }
+  foreach ($functionArray[1] as $function) {
+    if (strpos($function, 'hook') !== 0) {
+      continue;
+    }
 
-  foreach ($functionArray as $function) {
     if (isset($_SESSION['function'][$function])) {
       unset($_SESSION['function'][$function]);
     }
@@ -191,7 +191,8 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
   $functionArray = array();
   preg_match_all($functionFinder, $form_state['values']['code'], $functionArray);
 
-  if (empty($functionArray)) {
+  $filter = array_filter($functionArray);
+  if (empty($filter)) {
     return;
   }
 
@@ -199,6 +200,10 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
   $lines = explode("\n", strip_tags($form_state['values']['code']));
 
   foreach ($functionArray[1] as $function) {
+    if (strpos($function, 'hook') !== 0) {
+      continue;
+    }
+
     $func = new ReflectionFunction($function);
 
     $start = $func->getStartLine();
@@ -219,14 +224,15 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
       'arguments' => $arguments,
       'content' => $cont,
     );
+
+    // Show message.
+    drupal_set_message(t('The function @function-name inserted successfully to the functions stack.', array(
+      '@function-name' => $function,
+    )));
+
+    $_SESSION['inline_devel_cc'] = TRUE;
   }
 
-  $_SESSION['inline_devel_cc'] = TRUE;
-
-  // Show message.
-  drupal_set_message(t('The function @function-name inserted successfully to the functions stack.', array(
-    '@function-name' => $functions[1],
-  )));
 }
 
 function inline_devel_colored_code($form, $form_state) {
@@ -520,7 +526,7 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $d
 
   $args = array();
   $function = new ReflectionFunction($function_name);
-  
+
   return _inline_devel_function_arguments_to_array($function, $dollar);
 }
 
@@ -540,7 +546,7 @@ function _inline_deve_get_class_method_paramaters($class_name, $method_name, $al
 
       if (!method_exists($class_name, $method_name)) {
         $params = array(
-          '@class' => $class_name, 
+          '@class' => $class_name,
           '@method' => $method_name
         );
         drupal_set_message(t('The @class::@method is not exists', $params), 'error');
@@ -560,15 +566,15 @@ function _inline_deve_get_class_method_paramaters($class_name, $method_name, $al
 
 /**
  * Get the function reflection object and assert arguments to array.
- * 
+ *
  *  @param ReflectionMethod $reflectionObject
  *    An instance of a reflection object for class or class method.
- * 
+ *
  *  @param Boolean $dollar
  *    Add the doller sign near to every argument name.
- * 
+ *
  *  @return array of arguments function/method.
- */ 
+ */
 function _inline_devel_function_arguments_to_array($reflectionObject, $dollar = FALSE) {
   $args = array();
   foreach ($reflectionObject->getParameters() as $arguments) {
