@@ -1,0 +1,5 @@
+name = Inline Devel logs
+description = Save your submitted code from your devel execute form.
+core = 7.x
+dependencies[] = message
+dependencies[] = inline_devel
