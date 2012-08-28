@@ -17,13 +17,6 @@ function inline_devel_logs_menu() {
     'access arguments' => array('access devel information'),
   );
 
-  $items['admin/inline_devel/log/list'] = array(
-    'title' => 'foo',
-    'page callback' => 'inline_devel_logs_log_list',
-    'access arguments' => array('access devel information'),
-    'parent' => 'admin/structure',
-  );
-
   $items['admin/structure/inline_devel_admin/logs'] = array(
     'title' => 'Log list',
     'description' => 'Delete here your logs',

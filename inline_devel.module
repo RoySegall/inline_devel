@@ -4,7 +4,6 @@
  * The file for the inline_devel module.
  */
 
-
 /**
  * Implements hook_init().
  */
@@ -514,54 +513,19 @@ function _inline_devel_get_files() {
  *  @return array with list of arguments.
  */
 function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $dollar = FALSE) {
-  if (!function_exists($function_name)) {
-    if ($alert) {
-      $param = array(
-        '@name' => $function_name,
-      );
-      drupal_set_message(t('The function @name is not exists.', $param), 'error');
-    }
-    return;
-  }
+  $function = new inlineDevelReflection($function_name);
 
-  $args = array();
-  $function = new ReflectionFunction($function_name);
-
-  return _inline_devel_function_arguments_to_array($function, $dollar);
+  return $function->dollarArguments;
 }
 
 /**
  * Get the class methods parmaters function.
  */
 function _inline_deve_get_class_method_paramaters($class_name, $method_name, $alert = FALSE, $dollar = FALSE) {
-  // Check first if the methos and/or class exists.
-  if (!class_exists($class_name) || !method_exists($class_name, $method_name)) {
-    if ($alert) {
-      if (!class_exists($class_name)) {
-        $params = array(
-          '@name' => $class_name,
-        );
-        drupal_set_message(t('The class name @name not exists', $params), 'error');
-      }
-
-      if (!method_exists($class_name, $method_name)) {
-        $params = array(
-          '@class' => $class_name,
-          '@method' => $method_name
-        );
-        drupal_set_message(t('The @class::@method is not exists', $params), 'error');
-      }
-
-      if (!empty($params)) {
-        return;
-      }
-    }
-  }
-
   // Build up the parms for the method.
-  $method = new ReflectionMethod($class_name, $method_name);
+  $method = new inlineDevelReflection($method_name, $class_name);
 
-  return _inline_devel_function_arguments_to_array($method, $dollar);
+  return $method->dollarArguments;
 }
 
 /**

@@ -4,7 +4,7 @@
  * @file
  * Implementing a custom use of reflection class.
  */
- 
+
 class inlineDevelReflection {
 
   /**
@@ -56,6 +56,12 @@ class inlineDevelReflection {
   var $file;
 
   /**
+   * @param $messages;
+   *  Variable with the messages that the reflection calss return.
+   */
+  var $messages;
+
+  /**
    * In the construct function i'll save important things.
    */
   public function __construct($function_name, $class_name = '') {
@@ -69,10 +75,23 @@ class inlineDevelReflection {
       $this->_methodLoad();
     }
 
+    // When the class failed to load, show the messages.
+    if (!empty($this->messages)) {
+      return;
+    }
+
     // Set of function to do when loading a function.
     $this->getArguments();
     $this->lines();
     $this->fileName();
+  }
+
+  function showMessages() {
+    if (!empty($this->messages)) {
+      foreach ($this->messages as $message) {
+        drupal_set_message($message, 'error');
+      }
+    }
   }
 
   /**
@@ -106,7 +125,7 @@ class inlineDevelReflection {
       $this->reflection = new ReflectionFunction($this->name);
     }
     catch (Exception $e) {
-      throw new Exception($e->getMessage());
+      $this->messages[] = $e->getMessage();
     }
   }
 
@@ -117,7 +136,7 @@ class inlineDevelReflection {
     try {
       $this->reflection = new ReflectionMethod($this->class, $this->name);
     } catch (exception $e) {
-      throw new Exception($e->getMessage());
+      $this->messages[] = $e->getMessage();
     }
   }
 
@@ -126,6 +145,10 @@ class inlineDevelReflection {
    */
   function _getArguments(&$argumentsVariable, $dollar = FALSE) {
     $argumentsVariable = array();
+
+    if (!empty($this->messages)) {
+      return drupal_set_message();
+    }
 
     foreach ($this->reflection->getParameters() as $arguments) {
       $argumentsVariable[] = $dollar ? "$" . $arguments->name : $arguments->name;
