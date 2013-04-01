@@ -1,6 +1,6 @@
 /**
  * @file
- * Hnadle js functionallty for a quick access to the execute form in every page.
+ * Handle js functionality for a quick access to the execute form in every page.
  */
 
 (function ($) {
