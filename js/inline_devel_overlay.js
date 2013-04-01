@@ -7,7 +7,6 @@
 
 Drupal.behaviors.functionLoad = {
   attach: function(context, settings) {
-    console.log(settings.baseURL);
     $(document).keydown(function(event) {
       if (event.which == 65 && event.ctrlKey == true  && event.shiftKey == true) {
         if ($("#quick-code").css("display") != 'block') {
