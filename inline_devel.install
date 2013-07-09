@@ -25,3 +25,24 @@ function inline_devel_uninstall() {
   variable_del('number_of_spaces');
   variable_del('show_colored_code');
 }
+
+/**
+ * Implements hook_schema().
+ */
+function inline_devel_schema() {
+  $schema = array();
+
+  $schema['inline_devel'] = array(
+    'description' => 'Base table of the inline devel hooks.',
+    'fields' => array(
+      'id' => array(),
+      'time' => array(),
+      'uid' => array(),
+      'function' => array(),
+      'arguments' => array(),
+      'content' => array(),
+    ),
+  );
+
+  return $schema;
+}
