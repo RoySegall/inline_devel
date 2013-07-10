@@ -17,11 +17,68 @@ function inline_devel_init() {
   // Run the declared hooks/functions.
   _inline_devel_run_sessioned_functions();
 
-  // For some reason, when we decalre inline_devel_dummy_module_init the
-  // functoin is not implemented well.
+  // For some reason, when we declare inline_devel_dummy_module_init the
+  // function is not implemented well.
   if (function_exists('inline_devel_dummy_module_init')) {
     inline_devel_dummy_module_init();
   }
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function inline_devel_entity_info() {
+  return array(
+    'inline_devel' => array(
+      'label' => t('Inline devel'),
+      'entity class' => 'InlineDevelEntity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'inline_devel',
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+    ),
+  );
+}
+
+/**
+ * Create an inline devel entity.
+ *
+ * @param $values
+ *  The initialized values of the inline devel entity.
+ *
+ * @return InlineDevelEntity
+ *  The entity object of the inline devel entry.
+ */
+function inline_devel_create($values) {
+  return entity_create('inline_devel', $values);
+}
+
+/**
+ * Load an inline devel entry.
+ *
+ * @param $id
+ *  The inline devel identifier.
+ *
+ * @return InlineDevelEntity
+ *  The inline devel object.
+ */
+function doctor_load($id) {
+  $results = entity_load('inline_devel', array($id));
+  return reset($results);
+}
+
+/**
+ * Load multiple inline devel entries.
+ *
+ * @param $ids
+ *  List of IDs to load.
+ *
+ * @return InlineDevelEntity
+ *  List of inline devel entries.
+ */
+function doctor_load_multiple($ids) {
+  return entity_load('inline_devel', $ids);
 }
 
 /**
@@ -89,7 +146,6 @@ function inline_devel_variables_list($text) {
  */
 function inline_devel_get_classes($function, $class) {
   $methods = get_class_methods($class);
-  $i = 0;
   $output_functions = array();
 
   $i = 0;

@@ -4,10 +4,17 @@ package = Development
 core = 7.x
 
 tags[] = developer
+
+; Dependencies
 dependencies[] = devel
+dependencies[] = entity
 dependencies[] = inline_devel_dummy_module
 dependencies[] = inline_devel_admin_ui
 
+; Tests files
 files[] = includes/inline_devel_tests.inc
-files[] = includes/reflection.class.inc
 files[] = inline_devel.test
+
+; Core files
+files[] = includes/reflection.class.inc
+files[] = includes/inline_devel.entity.inc
