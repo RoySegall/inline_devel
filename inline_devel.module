@@ -63,7 +63,7 @@ function inline_devel_create($values) {
  * @return InlineDevelEntity
  *  The inline devel object.
  */
-function doctor_load($id) {
+function inline_devel_load($id) {
   $results = entity_load('inline_devel', array($id));
   return reset($results);
 }
@@ -77,7 +77,7 @@ function doctor_load($id) {
  * @return InlineDevelEntity
  *  List of inline devel entries.
  */
-function doctor_load_multiple($ids) {
+function inline_devel_load_multiple($ids) {
   return entity_load('inline_devel', $ids);
 }
 
@@ -151,11 +151,11 @@ function inline_devel_get_classes($function, $class) {
   $i = 0;
   foreach ($methods as $method) {
     if ((strpos(strtolower($method), strtolower($function)) === 0) xor empty($function)) {
-        $arguments = _inline_deve_get_class_method_paramaters($class, $method, FALSE, TRUE);
+      $arguments = _inline_deve_get_class_method_paramaters($class, $method, FALSE, TRUE);
 
-        if (!empty($arguments)) {
-          $arguments = implode(", ", $arguments);
-        }
+      if (!empty($arguments)) {
+        $arguments = implode(", ", $arguments);
+      }
 
       $output_functions[] = array(
         'id' => $i++,
