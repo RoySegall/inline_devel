@@ -50,7 +50,14 @@ function inline_devel_entity_info() {
  * @return InlineDevelEntity
  *  The entity object of the inline devel entry.
  */
-function inline_devel_create($values) {
+function inline_devel_create($values = array()) {
+  global $user;
+
+  $values += array(
+    'time' => time(),
+    'uid' => $user->uid,
+  );
+
   return entity_create('inline_devel', $values);
 }
 
