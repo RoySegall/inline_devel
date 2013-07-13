@@ -118,16 +118,16 @@ function inline_devel_menu() {
 }
 
 /**
- * Menu callback - Print out JSON format with the name of the functions.
+ * Print out JSON format with the name of the functions.
  */
 function inline_devel_php_functions($text) {
-  $functions = inline_devel_get_relevent_functions($text);
+  $functions = inline_devel_get_relevant_functions($text);
 
   drupal_json_output($functions);
 }
 
 /**
- * Menu callback - print out JSON format of avialable variables.
+ * print out JSON format of available variables.
  */
 function inline_devel_variables_list($text) {
   // Getting the cached variables list and bold the searched strings.
@@ -149,7 +149,7 @@ function inline_devel_variables_list($text) {
 }
 
 /**
- * Menu callback - return list of function that belong to the class.
+ * Return list of function that belong to the class.
  */
 function inline_devel_get_classes($function, $class) {
   $methods = get_class_methods($class);
@@ -179,7 +179,7 @@ function inline_devel_get_classes($function, $class) {
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
+function inline_devel_form_devel_execute_form_alter(&$form, $form_state) {
   // Load the default settings into the js.
   _inline_devel_load_settings_to_js();
 
@@ -202,7 +202,7 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['execute']['code']['#weight'] = 2;
   $form['execute']['op']['#weight'] = 1;
 
-  // Variasbles auto complete.
+  // Variables auto complete.
   $form['execute']['variables'] = array(
     '#type' => 'textfield',
     '#autocomplete_path' => 'devel/php/inline_devel/variable_suggestor',
@@ -218,8 +218,9 @@ function inline_devel_form_devel_execute_form_alter(&$form, &$form_state) {
   $form['#submit'][] = 'inline_devel_form_submit_register_hook';
   $form['#submit'][] = 'inline_devel_colored_code';
 }
+
 /**
- * Validate function to prevent redeclare the same function name.
+ * Validate function to prevent using the same function name.
  */
 function inline_devel_prevent_redeclare(&$form, &$form_state) {
   if (empty($form_state['values']['code'])) {
@@ -258,7 +259,6 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
     return;
   }
 
-  $cont = '';
   $lines = explode("\n", strip_tags($form_state['values']['code']));
 
   foreach ($functionArray[1] as $function) {
@@ -297,6 +297,9 @@ function inline_devel_form_submit_register_hook(&$form, &$form_state) {
 
 }
 
+/**
+ * Coloring the php code.
+ */
 function inline_devel_colored_code($form, $form_state) {
   $_SESSION['code'] = $form_state['values']['code'];
 }
@@ -341,7 +344,7 @@ function inline_devel_get_list_of_hooks() {
  */
 function inline_devel_get_list_of_variables(&$variables) {
   if ($cache = cache_get('inline_devel_variable_list')) {
-    $hooks = $cache->data;
+    $variables_data = $cache->data;
   }
   else {
     foreach (_inline_devel_get_files() as $file) {
@@ -377,25 +380,24 @@ function inline_devel_get_list_of_variables(&$variables) {
             if (!empty($hooks[$type]) && in_array($name, $hooks[$type])) {
               continue;
             }
-            $hooks[$type][] = $name;
+            $variables_data[$type][] = $name;
           }
         }
       }
     }
-    cache_set('inline_devel_variable_list', $hooks, 'cache');
+    cache_set('inline_devel_variable_list', $variables_data, 'cache');
   }
 
-  return $hooks;
+  return $variables_data;
 }
 
 /**
  * Scan all the directory for inc files or modules files.
  *
  * @param string $dir
- *   The directory path that need to scan for files.
- *
+ *  The directory path that need to scan for files.
  * @param array $files_list
- *   An array contain all the files with the full path for file_get_contents().
+ *  An array contain all the files with the full path for file_get_contents().
  */
 function inline_devel_get_all_files($dir, &$files_list) {
   $files = scandir($dir);
@@ -418,8 +420,8 @@ function inline_devel_get_all_files($dir, &$files_list) {
 /**
  * Return the function name that start with the argument.
  */
-function inline_devel_get_relevent_functions($funcion_name) {
-  $funcion_name = end(explode(' ', $funcion_name));
+function inline_devel_get_relevant_functions($function_name) {
+  $function_name = end(explode(' ', $function_name));
 
   $functions = get_defined_functions();
 
@@ -437,13 +439,12 @@ function inline_devel_get_relevent_functions($funcion_name) {
     cache_set('inline_devel_function_list', $scope, 'cache');
   }
 
-
   $output_functions = array();
 
   $i = 0;
   foreach ($scope as $type => $functions) {
     foreach ($functions as $function) {
-      if (strpos(strtolower($function), strtolower($funcion_name)) === 0) {
+      if (strpos(strtolower($function), strtolower($function_name)) === 0) {
         $arguments = _inline_devel_get_function_arguments($function, FALSE, TRUE);
 
         if (!empty($arguments)) {
@@ -499,7 +500,7 @@ function _inline_devel_run_sessioned_functions() {
  */
 function _inline_devel_overlay_devel() {
   if (user_access('access devel information')) {
-    // Abolute url of your drupal site.
+    // Absolute url of your drupal site.
     $url = url('', array('absolute' => TRUE));
 
     // Current path.
@@ -543,7 +544,7 @@ function _inline_devel_load_settings_to_js() {
 }
 
 /**
- * Return list of files that related to the modules functionallty.
+ * Return list of files that related to the modules functionality.
  */
 function _inline_devel_get_files() {
   $dirs = array(
@@ -564,16 +565,15 @@ function _inline_devel_get_files() {
 /**
  * Get the function arguments.
  *
- *  @param String $function_name
- *    The function name you would like to get the arguments.
+ * @param $function_name
+ *  The function name you would like to get the arguments.
+ * @param bool $alert
+ *  The function name you would like to get the arguments.
+ * @param bool $dollar
+ *  Add the droller sign near to every argument name.
  *
- *  @param Boolean $alert
- *    The function name you would like to get the arguments.
-  *
- *  @param Boolean $dollar
- *    Add the doller sign near to every argument name.
- *
- *  @return array with list of arguments.
+ * @return array
+ *  List of arguments.
  */
 function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $dollar = FALSE) {
   $function = new inlineDevelReflection($function_name);
@@ -582,10 +582,9 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $d
 }
 
 /**
- * Get the class methods parmaters function.
+ * Get the class methods parameters function.
  */
 function _inline_deve_get_class_method_paramaters($class_name, $method_name, $alert = FALSE, $dollar = FALSE) {
-  // Build up the parms for the method.
   $method = new inlineDevelReflection($method_name, $class_name);
 
   return $method->dollarArguments;
@@ -593,14 +592,13 @@ function _inline_deve_get_class_method_paramaters($class_name, $method_name, $al
 
 /**
  * Get the function reflection object and assert arguments to array.
+ * @param ReflectionMethod $reflectionObject
+ *  An instance of a reflection object for class or class method.
+ * @param Boolean $dollar
+ *  Add the dollar sign near to every argument name.
  *
- *  @param ReflectionMethod $reflectionObject
- *    An instance of a reflection object for class or class method.
- *
- *  @param Boolean $dollar
- *    Add the doller sign near to every argument name.
- *
- *  @return array of arguments function/method.
+ * @return array
+ *  Arguments of function/method.
  */
 function _inline_devel_function_arguments_to_array($reflectionObject, $dollar = FALSE) {
   $args = array();
