@@ -39,10 +39,39 @@ function inline_devel_admin_ui_menu() {
   $items['admin/structure/inline_devel_admin/delete/%inline_devel/%'] = array(
     'page callback' => 'inline_devel_admin_ui_session_delete',
     'page arguments' => array(4, 5),
+    'access arguments' => array('inline devel delete entry'),
+  );
+
+  $items['admin/structure/inline_devel_admin/edit/%inline_devel'] = array(
+    'page callback' => 'inline_devel_admin_ui_session_delete',
+    'page arguments' => array(4, 5),
     'access arguments' => array('access devel information'),
   );
 
+  $items['admin/structure/inline_devel_admin/delete/%inline_devel'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('inline_devel_delete_entry', 4),
+    'access arguments' => array('inline devel delete entry'),
+  );
+
   return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function inline_devel_ui_permission() {
+  return array(
+    'inline devel edit entry' => array(
+      'title' => t('Edit an inline devel entry'),
+      'description' => t('Grant the user a permission to edit an inline devel entry'),
+    ),
+    'inline devel delete entry' => array(
+      'title' => t('Delete an inline devel entry'),
+      'description' => t('Grant the user a permission to delete an inline devel entry'),
+    ),
+  );
 }
 
 /**
@@ -80,8 +109,8 @@ function inline_devel_admin_ui_session_manage() {
 
       $rows[] = array(
         array('data' => t('Entry created at: @time.', array('@time' => date('d/m/Y', $item->time))), 'colspan' => count($header) - 1),
-        l(t('Delete'), 'admin/structure/inline_devel_admin/item-delete/' . $item->identifier()),
-        l(t('Edit'), 'admin/structure/inline_devel_admin/item-edit/' . $item->identifier()),
+        l(t('Delete'), 'admin/structure/inline_devel_admin/delete/' . $item->identifier()),
+        l(t('Edit'), 'admin/structure/inline_devel_admin/edit/' . $item->identifier()),
       );
 
       foreach ($item->data as $name => $data) {
@@ -114,6 +143,32 @@ function inline_devel_admin_ui_session_manage() {
   $content .= theme('table', array('header' => $header, 'rows' => $rows));
 
   return $content;
+}
+
+/**
+ * Delete a complete inline devel entry.
+ */
+function inline_devel_delete_entry($form, &$form_state, InlineDevelEntity $inline_devel) {
+  $form_state['#entity'] = $inline_devel;
+
+  return confirm_form($form,
+    t('Are you sure you want to delete the entry?'),
+    'admin/structure/inline_devel_admin',
+    t('Are you sure you want to delete the entry with the functions: !functions',
+      array('!functions' => theme('item_list', array('items' => array_keys($inline_devel->data))))),
+    t('Delete'),
+    t('Cancel'));
+}
+
+/**
+ * Delete the inline devel entry.
+ */
+function inline_devel_delete_entry_submit($form, &$form_state) {
+  $inline_devel = $form_state['#entity'];
+  $inline_devel->delete();
+  drupal_set_message('The entry has been deleted.');
+
+  $form_state['redirect'] = 'admin/structure/inline_devel_admin';
 }
 
 /**
