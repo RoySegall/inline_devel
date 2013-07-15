@@ -43,15 +43,16 @@ function inline_devel_admin_ui_menu() {
   );
 
   $items['admin/structure/inline_devel_admin/edit/%inline_devel'] = array(
-    'page callback' => 'inline_devel_admin_ui_session_delete',
-    'page arguments' => array(4, 5),
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('inline_devel_admin_ui_edit_entry', 4),
     'access arguments' => array('access devel information'),
   );
 
   $items['admin/structure/inline_devel_admin/delete/%inline_devel'] = array(
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('inline_devel_delete_entry', 4),
+    'page arguments' => array('inline_devel_admin_ui_delete_entry', 4),
     'access arguments' => array('inline devel delete entry'),
   );
 
@@ -79,6 +80,7 @@ function inline_devel_ui_permission() {
  */
 function inline_devel_admin_ui_session_manage() {
   global $user;
+
   $content = t('Here you can manage your temporary functions that were defined in the !devel-execute-page-link.',
   array(
     '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php'),
@@ -130,10 +132,7 @@ function inline_devel_admin_ui_session_manage() {
           array(
             'data' => l(t('Delete'),'admin/structure/inline_devel_admin/delete/' . $item->identifier() . '/' . $name),
             'class' => array('function-delete-button'),
-          ),
-          array(
-            'data' => l(t('Edit'),'admin/structure/inline_devel_admin/edit/' . $item->identifier() . '/' . $name),
-            'class' => array('function-edit-button'),
+            'colspan' => 2,
           ),
         );
       }
@@ -146,9 +145,66 @@ function inline_devel_admin_ui_session_manage() {
 }
 
 /**
+ * Edit an entry.
+ */
+function inline_devel_admin_ui_edit_entry($form, &$form_state, InlineDevelEntity $inline_devel) {
+  $form_state['#entity'] = $inline_devel;
+
+  foreach ($inline_devel->data as $function => $data) {
+    $form['data'][$function] = array(
+      $function . '[function]' => array(
+        '#type' => 'textfield',
+        '#title' => t('Function'),
+        '#value' => $data['function'],
+      ),
+    $function . '[arguments]' => array(
+        '#type' => 'textfield',
+        '#title' => t('Arguments'),
+        '#value' => $data['arguments'],
+      ),
+      $function . '[content]' => array(
+        '#type' => 'textarea',
+        '#title' => t('Content'),
+        '#value' => $data['content'],
+      ),
+    );
+  }
+
+  $form['actions'] = array(
+    '#type' => 'actions',
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Send'),
+    ),
+  );
+
+  return $form;
+}
+
+/**
+ * Save the inline devel entry.
+ */
+function inline_devel_admin_ui_edit_entry_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/structure/inline_devel_admin';
+  $inline_devel = $form_state['#entity'];
+
+  $data = array();
+  foreach ($form_state['input'] as $name => $info) {
+    if (!is_array($info)) {
+      continue;
+    }
+
+    $data[$name] = $info;
+  }
+
+  $inline_devel->data = $data;
+  $inline_devel->save();
+}
+
+/**
  * Delete a complete inline devel entry.
  */
-function inline_devel_delete_entry($form, &$form_state, InlineDevelEntity $inline_devel) {
+function inline_devel_admin_ui_delete_entry($form, &$form_state, InlineDevelEntity $inline_devel) {
   $form_state['#entity'] = $inline_devel;
 
   return confirm_form($form,
@@ -163,7 +219,7 @@ function inline_devel_delete_entry($form, &$form_state, InlineDevelEntity $inlin
 /**
  * Delete the inline devel entry.
  */
-function inline_devel_delete_entry_submit($form, &$form_state) {
+function inline_devel_admin_ui_delete_entry_submit($form, &$form_state) {
   $inline_devel = $form_state['#entity'];
   $inline_devel->delete();
   drupal_set_message('The entry has been deleted.');
