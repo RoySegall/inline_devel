@@ -79,8 +79,6 @@ function inline_devel_ui_permission() {
  * UI for delete the sessions.
  */
 function inline_devel_admin_ui_session_manage() {
-  global $user;
-
   $content = t('Here you can manage your temporary functions that were defined in the !devel-execute-page-link.',
   array(
     '!devel-execute-page-link' => l(t('devel execute page'), 'devel/php'),
@@ -96,7 +94,6 @@ function inline_devel_admin_ui_session_manage() {
   $query = new entityFieldQuery();
   $result = $query
     ->entityCondition('entity_type', 'inline_devel')
-    ->propertyCondition('uid', $user->uid)
     ->execute();
 
   if (empty($result['inline_devel'])) {
@@ -170,6 +167,43 @@ function inline_devel_admin_ui_edit_entry($form, &$form_state, InlineDevelEntity
     );
   }
 
+  // Change the owner of the entry.
+  $form['additional_settings'] = array(
+    '#type' => 'vertical_tabs',
+    '#weight' => 99,
+  );
+
+  $form['owner'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Authoring information'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#group' => 'additional_settings',
+    '#attributes' => array(
+      'class' => array('entry-form-owner'),
+    ),
+    '#attached' => array(
+      'js' => array(
+        drupal_get_path('module', 'inline_devel_admin_ui') . '/js/inline_devel_admin_ui.js',
+        array(
+          'type' => 'setting',
+          'data' => array('anonymous' => variable_get('anonymous', t('Anonymous'))),
+        ),
+      ),
+    ),
+    '#weight' => 90,
+  );
+
+  $form['owner']['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Authored by'),
+    '#maxlength' => 60,
+    '#weight' => 99,
+    '#autocomplete_path' => 'user/autocomplete',
+    '#description' => t('Leave blank for %anonymous.', array('%anonymous' => variable_get('anonymous', t('Anonymous')))),
+    '#default_value' => user_load($inline_devel->uid)->name,
+  );
+
   $form['actions'] = array(
     '#type' => 'actions',
     'submit' => array(
@@ -198,6 +232,9 @@ function inline_devel_admin_ui_edit_entry_submit($form, &$form_state) {
   }
 
   $inline_devel->data = $data;
+
+  $inline_devel->uid = user_load_by_name($form_state['values']['name'])->uid;
+  dpm($inline_devel);
   $inline_devel->save();
 }
 
