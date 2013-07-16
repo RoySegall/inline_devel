@@ -130,10 +130,7 @@ function inline_devel_admin_ui_session_manage() {
           array(
             'data' => l(t('Delete'),'admin/structure/inline_devel_admin/delete/' . $item->identifier() . '/' . $name),
             'class' => array('function-delete-button'),
-          ),
-          array(
-            'data' => l(t('Edit'),'admin/structure/inline_devel_admin/edit/' . $item->identifier() . '/' . $name),
-            'class' => array('function-edit-button'),
+            'colspan' => 2,
           ),
         );
       }
