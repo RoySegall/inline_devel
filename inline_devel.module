@@ -368,6 +368,9 @@ function inline_devel_get_list_of_hooks() {
  *
  *  @param Array $variable
  *    A by ref variable that will receive the value of the variables list.
+ *
+ *
+ * @TODO: Refactor.
  */
 function inline_devel_get_list_of_variables(&$variables) {
   if ($cache = cache_get('inline_devel_variable_list')) {
