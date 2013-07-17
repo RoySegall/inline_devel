@@ -227,6 +227,28 @@ function inline_devel_prevent_redeclare(&$form, &$form_state) {
     return;
   }
 
+  // Build a list of hooks the user declared before.
+  global $user;
+  $query = new entityFieldQuery();
+  $result = $query
+    ->entityCondition('entity_type', 'inline_devel')
+    ->propertyCondition('uid', $user->uid)
+    ->execute();
+
+  if (empty($result['inline_devel'])) {
+    // No entries so we don't need to search if the user declare before the hook.
+    // Return early.
+    return;
+  }
+
+  $items = inline_devel_load_multiple(array_keys($result['inline_devel']));
+
+  foreach ($items as $item) {
+    foreach (array_keys($item->data) as $function) {
+      $entries[$item->identifier()] = $function;
+    }
+  }
+
   $functionFinder = '/function[\s\n]+(\S+)[\s\n]*\(/';
   $functionArray = array();
   preg_match_all($functionFinder, $form_state['values']['code'], $functionArray);
@@ -236,14 +258,16 @@ function inline_devel_prevent_redeclare(&$form, &$form_state) {
       continue;
     }
 
-    if (isset($_SESSION['function'][$function])) {
-      unset($_SESSION['function'][$function]);
-    }
+    $function = str_replace('hook', 'inline_devel_dummy_module', $function);
+
+    $inline_devel = inline_devel_load(array_search($function, $entries));
+    unset($inline_devel->data[$function]);
+    $inline_devel->save();
   }
 }
 
 /**
- * Custom submit handler: register hook in the hooks_sessions.
+ * Save the temp hook in the DB - we need it for later.
  */
 function inline_devel_form_submit_register_hook(&$form, &$form_state) {
   if (empty($form_state['values']['code'])) {
