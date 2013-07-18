@@ -137,7 +137,6 @@ function inline_devel_admin_ui_session_manage() {
     }
   }
 
-
   // We had some inline devel entries but we didn't process any of them.
   if (empty($rows)) {
     $rows[] = array(
