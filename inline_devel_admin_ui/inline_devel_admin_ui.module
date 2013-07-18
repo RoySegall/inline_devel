@@ -101,6 +101,7 @@ function inline_devel_admin_ui_session_manage() {
   }
   else {
     $items = inline_devel_load_multiple(array_keys($result['inline_devel']));
+
     foreach ($items as $item) {
       if (empty($item->data)) {
         continue;
@@ -134,6 +135,17 @@ function inline_devel_admin_ui_session_manage() {
         );
       }
     }
+  }
+
+
+  // We had some inline devel entries but we didn't process any of them.
+  if (empty($rows)) {
+    $rows[] = array(
+      array(
+        'data' => t('No data were found.'),
+        'colspan' => count($header),
+      ),
+    );
   }
 
   $content .= theme('table', array('header' => $header, 'rows' => $rows));
