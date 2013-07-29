@@ -8,6 +8,9 @@
  * Implements hook_init().
  */
 function inline_devel_init() {
+  // Add the settings for the inline devel.
+  _inline_devel_load_settings_to_js();
+
   // Adding js file for loading the execute form in every page.
   _inline_devel_overlay_devel();
 
@@ -180,9 +183,6 @@ function inline_devel_get_classes($function, $class) {
  * Implements hook_form_FORM_ID_alter().
  */
 function inline_devel_form_devel_execute_form_alter(&$form, $form_state) {
-  // Load the default settings into the js.
-  _inline_devel_load_settings_to_js();
-
   if (isset($_SESSION['code']) and !empty($_SESSION['code']) && variable_get('show_colored_code', FALSE)) {
     $form['execute']['code']['#prefix'] =
       "<div class='colored-code'><a href='#' class='textarea-link'>" . t('Show textarea/hide colored code') . "</a><br />" .
@@ -193,14 +193,11 @@ function inline_devel_form_devel_execute_form_alter(&$form, $form_state) {
   $_SESSION['code'] = '';
 
   // Add the js and css file.
-  $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel_api.js';
   $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel') . '/js/inline_devel.js';
-  $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel') . '/css/inline_devel.css';
 
   $form['execute']['code']['#title'] .= ', ' . $form['execute']['code']['#description'];
-  $form['execute']['code']['#description'] = "<div class='suggestion-wrapper'><div class='suggestion' id='suggestion'></div></div>";
-  $form['execute']['code']['#weight'] = 2;
   $form['execute']['op']['#weight'] = 1;
+  $form['execute']['code']['#weight'] = 2;
 
   // Variables auto complete.
   $form['execute']['variables'] = array(
@@ -261,8 +258,10 @@ function inline_devel_prevent_redeclare(&$form, &$form_state) {
     $function = str_replace('hook', 'inline_devel_dummy_module', $function);
 
     $inline_devel = inline_devel_load(array_search($function, $entries));
-    unset($inline_devel->data[$function]);
-    $inline_devel->save();
+    if ($inline_devel) {
+      unset($inline_devel->data[$function]);
+      $inline_devel->save();
+    }
   }
 }
 
