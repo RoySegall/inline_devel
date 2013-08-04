@@ -21,6 +21,3 @@ files[] = includes/inline_devel.entity.inc
 
 ; CSS file
 stylesheets[all][] = css/inline_devel.css
-
-; JS
-scripts[] = js/inline_devel.api.js

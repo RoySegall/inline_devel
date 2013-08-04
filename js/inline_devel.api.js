@@ -64,6 +64,10 @@ function log(word) {
     // Holds the delta that the user selected from the function suggester.
     var currentFunction;
 
+    // Wrapping the text area so the suggester will be relative the text area
+    // and not to the page.
+    $(this).wrap("<div id='inline_devel_wrapper'></div>");
+
     // Attaching the suggester divs to the element.
     $(this).after("<div class='suggestion-wrapper'><div class='suggestion' id='suggestion'></div></div>");
 
@@ -117,6 +121,11 @@ function log(word) {
           items.push(jQuery.itemPush(val));
         });
 
+        // Change the location of the suggester.
+        if (Drupal.settings.inline_devel.caret_position != '---') {
+          textarea.floatingDetector($("DIV.suggestion-wrapper.border-up"));
+        }
+
         // Insert the html.
         functionsName.html(items.join(''));
 
@@ -162,10 +171,10 @@ function log(word) {
         textarea.val(data.value.slice(0, start) + last_word + white_space + data.value.slice(end));
 
         // Change the position of the cursor.
-        textarea.setCursorPosition(end + settings.number_of_spaces, end + settings.number_of_spaces);
+        textarea.setCursorPosition(end + settings.number_of_spaces, end + parseInt(settings.number_of_spaces));
       }
 
-      if ($(this).breakOnReserved() == 0 || jQuery.inArray(keyPressed.which, new Array(48, 57, 219, 221)) > -1) {
+      if ($(this).breakOnReserved() == 0 || jQuery.inArray(keyPressed.which, new Array(8, 9, 48, 57, 219, 221)) > -1) {
         $("#suggestion").closeSuggester();
         return;
       }
@@ -173,7 +182,7 @@ function log(word) {
       // The functions is revealed to the user. When scrolling down with the
       // keyboard need to keep the the courser in the same place for replacing
       // words properly.
-      if ((keyPressed.which == 38 || keyPressed.which == 40) && availableFunctionNumber > 0) {
+      if ((keyPressed.which == 38 || keyPressed.which == 40 || keyPressed.which == 9) && availableFunctionNumber > 0) {
         keyPressed.preventDefault();
         $("#suggestion").getPositionOverflow(keyPressed.which);
       }
@@ -570,5 +579,34 @@ function log(word) {
     }
   };
 
-})(jQuery);
+  /**
+   * Calculating the floating position of the x and y for the detector.
+   */
+  jQuery.fn.floatingDetector = function(functions) {
+    // Get the x position of the textarea.
+    var x = Math.abs($(this).position().left);
 
+    // Get the y position of the textarea.
+    var y = Math.abs($(this).position().top);
+
+    // Set the floating position of the suggester.
+    var pos = $(this).getCaretPosition();
+
+    // Different browser needed different additional height.
+    var additional_height = 0;
+    if ($.browser.mozilla) {
+      additional_height = 7;
+    }
+    else {
+      additional_height = 15;
+    }
+
+    functions
+      .css({
+        position: "absolute",
+        left: x + pos.left,
+        top: y + pos.top + additional_height
+      });
+  };
+
+})(jQuery);

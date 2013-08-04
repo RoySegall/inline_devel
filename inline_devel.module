@@ -11,6 +11,9 @@ function inline_devel_init() {
   // Add the settings for the inline devel.
   _inline_devel_load_settings_to_js();
 
+  // Load JS files.
+  _inline_devel_load_js_files();
+
   // Adding js file for loading the execute form in every page.
   _inline_devel_overlay_devel();
 
@@ -578,6 +581,7 @@ function _inline_devel_load_settings_to_js() {
     'esc_enable' => TRUE,
     'spaces_instead_of_tabs' => TRUE,
     'number_of_spaces' => 2,
+    'caret_position' => '---',
   );
 
   $settings = array();
@@ -590,6 +594,19 @@ function _inline_devel_load_settings_to_js() {
     array('inline_devel' => $settings,),
     array('type' => 'setting',)
   );
+}
+
+/**
+ * Load needed JS files.
+ */
+function _inline_devel_load_js_files() {
+  // Load the caret position plugin.
+  if (module_exists('libraries') && (!$folder = variable_get('caret_position', '---'))  != 'caret_position') {
+    drupal_add_js($folder . '/jquery.caretposition.js');
+  }
+
+  // Load the api file of Inline Devel module.
+  drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel.api.js');
 }
 
 /**

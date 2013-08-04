@@ -347,5 +347,26 @@ function inline_devel_admin_ui_shorcuts_manage() {
     '#default_value' => variable_get('show_colored_code', FALSE),
   );
 
+  $params = array(
+    '!repository' => l('Repository', 'https://github.com/wolasss/jquery-caret-position-getter'),
+  );
+
+  $libraries = !module_exists('libraries') ? array() : libraries_get_libraries();
+
+  $form['caret_position'] = array(
+    '#type' => 'select',
+    '#title' => t('Select the location of the caret position getter library'),
+    '#description' => t('If you would like to display the function suggester under the caret on the text area, clone the !repository to the libraries folder and select the proper folder.', $params),
+    '#options' => array(
+      '---' => t('Turned off'),
+    ) + array_flip($libraries),
+    '#disabled' => !$libraries,
+    '#default_value' => variable_get('caret_position', '---'),
+  );
+
+  if (!$libraries) {
+    $form['caret_position']['#description'] .= '<br /><span style="color: red;">' . t('The libraries module is needed for this action.') . ' </span>';
+  }
+
   return system_settings_form($form);
 }
