@@ -6,7 +6,6 @@ core = 7.x
 tags[] = developer
 
 ; Dependencies
-dependencies[] = devel
 dependencies[] = entity
 dependencies[] = inline_devel_dummy_module
 dependencies[] = inline_devel_admin_ui

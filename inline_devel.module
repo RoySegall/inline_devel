@@ -8,6 +8,10 @@
  * Implements hook_init().
  */
 function inline_devel_init() {
+  if (!module_exists('devel')) {
+    return;
+  }
+
   // Add the settings for the inline devel.
   _inline_devel_load_settings_to_js();
 
