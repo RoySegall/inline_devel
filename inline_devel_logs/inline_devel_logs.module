@@ -5,6 +5,65 @@
  * Main module file for Inline devel logs.
  */
 
+
+/**
+ * Implements hook_entity_info().
+ */
+function inline_devel_logs_entity_info() {
+  return array(
+    'inline_devel_logs' => array(
+      'label' => t('Inline devel log'),
+      'entity class' => 'Entity',
+      'controller class' => 'EntityAPIController',
+      'base table' => 'inline_devel_logs',
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+    ),
+  );
+}
+
+/**
+ * Create an inline devel log entity.
+ *
+ * @param $values
+ *  The initialized values of the inline devel log entity.
+ *
+ * @return Entity
+ *  The entity object of the inline devel entry.
+ */
+function inline_devel_logs_create($values = array()) {
+  global $user;
+  return entity_create('inline_devel_logs', $values);
+}
+
+/**
+ * Load an inline devel log entry.
+ *
+ * @param $id
+ *  The inline devel log identifier.
+ *
+ * @return Entity
+ *  The inline devel log object.
+ */
+function inline_devel_logs_load($id) {
+  $results = entity_load('inline_devel_logs', array($id));
+  return reset($results);
+}
+
+/**
+ * Load multiple inline devel logs entries.
+ *
+ * @param $ids
+ *  List of IDs to load.
+ *
+ * @return Entity
+ *  List of inline devel entries.
+ */
+function inline_devel_logs_load_multiple($ids) {
+  return entity_load('inline_devel_logs', $ids);
+}
+
 /**
  * Implements hook_menu().
  */
@@ -33,34 +92,6 @@ function inline_devel_logs_menu() {
     'page arguments' => array(5),
     'weight' => 2,
   );
-
-  return $items;
-}
-
-/**
- * Implements hook_default_message_type().
- */
-function inline_devel_logs_default_message_type() {
-  $items = array();
-  $items['inline_devel_log'] = entity_import('message_type', '{
-    "name" : "inline_devel_log",
-    "description" : "Inline devel log",
-    "argument_keys" : [ "@code" ],
-    "argument" : [],
-    "category" : "message_type",
-    "data" : { "purge" : { "override" : 0, "enabled" : 0, "quota" : "", "days" : "" } },
-    "language" : "",
-    "arguments" : null,
-    "message_text" : { "und" : [
-        {
-          "value" : "@code",
-          "format" : "full_html",
-          "safe_value" : "\u003Cp\u003E@code\u003C\/p\u003E\n"
-        }
-      ]
-    },
-    "rdf_mapping" : []
-  }');
 
   return $items;
 }
@@ -107,66 +138,25 @@ function inline_devel_logs_form_devel_execute_form_alter(&$form, &$form_state) {
 }
 
 /**
+ * Get the number of logs.
+ */
+function inline_devel_logs_number_of_logs() {
+  $number = 0;
+
+  return $number;
+}
+
+/**
+ * Get list of logs.
+ */
+function inline_devel_logs_get_logs() {
+  return 'foo';
+}
+
+/**
  * Custom execute function - log the message.
  */
 function inline_devel_logs_log_function(&$form, $form_state) {
-  _inline_devel_logs_log_functions($form_state['values']['code']);
-}
-
-/**
- * Helper function - logging the code.
- */
-function _inline_devel_logs_log_functions($code) {
-  $code = message_create('inline_devel_log', array(
-    'arguments' => array(
-      '@code' => $code,
-    ),
-  ));
-
-  message_save($code);
-}
-
-/**
- * Return the number of logs.
- */
-function inline_devel_logs_number_of_logs() {
-  return _inline_devel_logs_efq()
-    ->count()
-    ->execute();
-}
-
-/**
- * Return the logs.
- */
-function inline_devel_logs_get_logs() {
-  $result = _inline_devel_logs_efq()
-    ->propertyOrderBy('mid', 'DESC')
-    ->execute();
-
-  if (empty($result['message'])) {
-    return;
-  }
-
-  // Count how many times the code was submitted.
-  foreach (message_load_multiple(array_keys($result['message'])) as $message) {
-    if (empty($message->arguments['@code'])) {
-      continue;
-    }
-    $codes[json_encode($message->arguments['@code'])] = array(
-      'code' => $message->arguments['@code'],
-      'url' => url('inline_devel/log/redo/' . $message->mid),
-    );
-  }
-
-  $content = '';
-
-  foreach ($codes as $code) {
-    $content .= theme('inline_devel_log', array(
-      'code' => inline_devel_logs_formatted_text($code['code']),
-      'url' => $code['url'],
-    ));
-  }
-  return $content;
 }
 
 /**
@@ -182,84 +172,4 @@ function inline_devel_logs_log_redo($message) {
 
    // Go back to the devel.
    drupal_goto('devel/php');
-}
-
-/**
- * Helper function - return the entity filed query on the log messages.
- */
-function _inline_devel_logs_efq() {
-  $query = new entityFieldQuery();
-  $result = $query
-    ->entityCondition('entity_type', 'message')
-    ->propertyCondition('type', 'inline_devel_log', '=');
-
-  return $result;
-}
-
-/**
- * Replacing the white spaces to &nbsp; and apply nl2br
- */
-function inline_devel_logs_formatted_text($string) {
-  $string = str_replace(' ', '&nbsp;', $string);
-  $string = str_replace("\n", "<br />", $string);
-
-  return $string;
-}
-
-/**
- * Custom page - show to logs for delete.
- */
-function inline_devel_logs_log_list() {
-  $result = _inline_devel_logs_efq()
-    ->propertyOrderBy('mid', 'DESC')
-    ->execute();
-
-  if (empty($result['message'])) {
-    return t('No logs were found.');
-  }
-  // Count how many times the code was submitted.
-  foreach (message_load_multiple(array_keys($result['message'])) as $message) {
-    $mids[serialize($message->arguments['@code'])][] = $message->mid;
-  }
-
-  $header = array(
-    t('Code'),
-    t('Delete'),
-  );
-
-  $rows = array();
-  foreach ($mids as $code => $mid) {
-    $rows[] = array(
-      unserialize($code),
-      l(t('Delete'), 'admin/structure/inline_devel_admin/logs/delete/' . implode("-", $mid)),
-    );
-  }
-
-  $page = l(t('Delete all logs'), 'admin/structure/inline_devel_admin/logs/delete/all');
-  $page .= '<br /><br />';
-  $page .= theme('table', array('header' => $header, 'rows' => $rows));
-
-  return $page;
-}
-
-/**
- * Delete the logs.
- */
-function inline_devel_logs_log_delete($args) {
-  if ($args == 'all') {
-    $result = _inline_devel_logs_efq()->execute();
-    message_delete_multiple(array_keys($result['message']));
-  }
-  else {
-    message_delete_multiple(explode("-", $args));
-  }
-
-  drupal_set_message(t('The logs were deleted.'));
-
-  // No logs were found - redirect to main page.
-  if (inline_devel_logs_number_of_logs() == 0) {
-    drupal_goto('');
-  }
-
-  drupal_goto('admin/structure/inline_devel_admin/logs');
 }
