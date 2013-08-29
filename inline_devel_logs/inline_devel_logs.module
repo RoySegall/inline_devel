@@ -33,7 +33,6 @@ function inline_devel_logs_entity_info() {
  *  The entity object of the inline devel entry.
  */
 function inline_devel_logs_create($values = array()) {
-  global $user;
   return entity_create('inline_devel_logs', $values);
 }
 
@@ -160,16 +159,16 @@ function inline_devel_logs_log_function(&$form, $form_state) {
 }
 
 /**
- * Redo the function with three stes:
+ * Redo the function with three steps:
  *  1. Redo the function all over again.
  *  2. log the code all over again
  *  3. Write the code in the last session code to show to code in the form.
  */
 function inline_devel_logs_log_redo($message) {
-   eval($message->arguments['@code']);
-   _inline_devel_logs_log_functions($message->arguments['@code']);
-   $_SESSION['devel_execute_code'] = $message->arguments['@code'];
+  eval($message->arguments['@code']);
+  // TOOD: Log the code.
+  $_SESSION['devel_execute_code'] = $message->arguments['@code'];
 
-   // Go back to the devel.
-   drupal_goto('devel/php');
+  // Go back to the devel.
+  drupal_goto('devel/php');
 }
