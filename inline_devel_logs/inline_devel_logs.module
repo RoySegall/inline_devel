@@ -33,6 +33,12 @@ function inline_devel_logs_entity_info() {
  *  The entity object of the inline devel entry.
  */
 function inline_devel_logs_create($values = array()) {
+  global $user;
+
+  $values += array(
+    'uid' => $user->uid,
+    'time' => REQUEST_TIME,
+  );
   return entity_create('inline_devel_logs', $values);
 }
 
@@ -149,13 +155,13 @@ function inline_devel_logs_number_of_logs() {
  * Get list of logs.
  */
 function inline_devel_logs_get_logs() {
-  return 'foo';
 }
 
 /**
  * Custom execute function - log the message.
  */
 function inline_devel_logs_log_function(&$form, $form_state) {
+  inline_devel_create(array('code' => $form_state['code']))->save();
 }
 
 /**
@@ -164,10 +170,12 @@ function inline_devel_logs_log_function(&$form, $form_state) {
  *  2. log the code all over again
  *  3. Write the code in the last session code to show to code in the form.
  */
-function inline_devel_logs_log_redo($message) {
-  eval($message->arguments['@code']);
-  // TOOD: Log the code.
-  $_SESSION['devel_execute_code'] = $message->arguments['@code'];
+function inline_devel_logs_log_redo($inline_devel_log) {
+  // Redo the code.
+  eval($inline_devel_log->code);
+
+  // Add the code to the session so the user would see the code when redone.
+  $_SESSION['devel_execute_code'] = $inline_devel_log->code;
 
   // Go back to the devel.
   drupal_goto('devel/php');
