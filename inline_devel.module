@@ -91,7 +91,7 @@ function inline_devel_load($id) {
  * @param $ids
  *  List of IDs to load.
  *
- * @return InlineDevelEntity
+ * @return InlineDevelEntity[]
  *  List of inline devel entries.
  */
 function inline_devel_load_multiple($ids) {
@@ -376,9 +376,10 @@ function inline_devel_get_list_of_hooks() {
 /**
  * Get all defined variables from the files and their defined module.
  *
- *  @param Array $variable
- *    A by ref variable that will receive the value of the variables list.
+ * @param $variables
  *
+ * @return
+ *  List of defined variables from files.
  *
  * @TODO: Refactor.
  */
