@@ -245,7 +245,6 @@ function inline_devel_admin_ui_edit_entry_submit($form, &$form_state) {
   $inline_devel->data = $data;
 
   $inline_devel->uid = user_load_by_name($form_state['values']['name'])->uid;
-  dpm($inline_devel);
   $inline_devel->save();
 }
 
