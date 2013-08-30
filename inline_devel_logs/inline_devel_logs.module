@@ -75,7 +75,7 @@ function inline_devel_logs_load_multiple($ids) {
 function inline_devel_logs_menu() {
   $items = array();
 
-  $items['inline_devel/log/redo/%message'] = array(
+  $items['inline_devel/log/redo/%inline_devel_logs'] = array(
     'page callback' => 'inline_devel_logs_log_redo',
     'page arguments' => array(3),
     'access arguments' => array('access devel information'),
@@ -105,9 +105,14 @@ function inline_devel_logs_menu() {
  * Implements hook_theme().
  */
 function inline_devel_logs_theme() {
-  return array('inline_devel_log' => array(
+  return array('inline_devel_logs' => array(
     'template' => 'inline_devel_log_row',
     'path' => drupal_get_path('module', 'inline_devel_logs') . '/template',
+    'variables' => array(
+      'code' => NULL,
+      'log' => NULL,
+      'url' => NULL,
+    ),
   ));
 }
 
@@ -117,7 +122,14 @@ function inline_devel_logs_theme() {
  */
 function inline_devel_logs_form_devel_execute_form_alter(&$form, &$form_state) {
   // If there are any history of logged code - show the history button.
-  if (inline_devel_logs_number_of_logs()) {
+  if ($logs = inline_devel_logs_get_logs()) {
+
+    // Building the HTML output of the history.
+    $logs_output = '';
+    foreach ($logs as $log) {
+      $logs_output .= theme('inline_devel_logs', array('code' => $log->code, 'url' => url('inline_devel/log/redo/' . $log->identifier())));
+    }
+
     $form['#attached']['css'][] = drupal_get_path('module', 'inline_devel_logs') . '/css/inline_devel_logs.css';
     $form['#attached']['js'][] = drupal_get_path('module', 'inline_devel_logs') . '/js/inline_devel_logs.js';
 
@@ -127,7 +139,7 @@ function inline_devel_logs_form_devel_execute_form_alter(&$form, &$form_state) {
       '#type' => 'button',
       '#weight' => 1,
       '#value' => t('History'),
-      '#suffix' => '<div id="history"><div class="code-wrappers">' . inline_devel_logs_get_logs() . '</div></div></div>',
+      '#suffix' => '<div id="history"><div class="code-wrappers">' . $logs_output . '</div></div></div>',
       '#attributes' => array(
         'onclick' => array("return false;"),
       ),
@@ -143,25 +155,41 @@ function inline_devel_logs_form_devel_execute_form_alter(&$form, &$form_state) {
 }
 
 /**
- * Get the number of logs.
- */
-function inline_devel_logs_number_of_logs() {
-  $number = 0;
-
-  return $number;
-}
-
-/**
  * Get list of logs.
+ *
+ * @param $code
+ *  Optional; If not empty, the query will search for logs with the code.
+ *
+ * @return Entity[]
+ *  Array of inline devel logs items.
  */
-function inline_devel_logs_get_logs() {
+function inline_devel_logs_get_logs($code = '') {
+  $query = new entityFieldQuery();
+
+  $query->entityCondition('entity_type', 'inline_devel_logs');
+
+  if ($code) {
+    $query->propertyCondition('code', $code);
+  }
+
+  $result = $query->execute();
+
+  if (empty($result['inline_devel_logs'])) {
+    return array();
+  }
+
+  return inline_devel_logs_load_multiple(array_keys($result['inline_devel_logs']));
 }
 
 /**
  * Custom execute function - log the message.
  */
 function inline_devel_logs_log_function(&$form, $form_state) {
-  inline_devel_create(array('code' => $form_state['code']))->save();
+  if (inline_devel_logs_get_logs($form_state['values']['code'])) {
+    return;
+  }
+
+  inline_devel_logs_create(array('code' => $form_state['values']['code']))->save();
 }
 
 /**

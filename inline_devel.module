@@ -248,6 +248,10 @@ function inline_devel_prevent_redeclare(&$form, &$form_state) {
   $items = inline_devel_load_multiple(array_keys($result['inline_devel']));
 
   foreach ($items as $item) {
+    if (empty($item->data)) {
+      continue;
+    }
+
     foreach (array_keys($item->data) as $function) {
       $entries[$item->identifier()] = $function;
     }
