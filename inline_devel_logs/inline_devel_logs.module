@@ -13,7 +13,7 @@ function inline_devel_logs_entity_info() {
   return array(
     'inline_devel_logs' => array(
       'label' => t('Inline devel log'),
-      'entity class' => 'Entity',
+      'entity class' => 'InlineDevelLogs',
       'controller class' => 'EntityAPIController',
       'base table' => 'inline_devel_logs',
       'entity keys' => array(
@@ -29,7 +29,7 @@ function inline_devel_logs_entity_info() {
  * @param $values
  *  The initialized values of the inline devel log entity.
  *
- * @return Entity
+ * @return InlineDevelLogs
  *  The entity object of the inline devel entry.
  */
 function inline_devel_logs_create($values = array()) {
@@ -48,7 +48,7 @@ function inline_devel_logs_create($values = array()) {
  * @param $id
  *  The inline devel log identifier.
  *
- * @return Entity
+ * @return InlineDevelLogs
  *  The inline devel log object.
  */
 function inline_devel_logs_load($id) {
@@ -62,7 +62,7 @@ function inline_devel_logs_load($id) {
  * @param $ids
  *  List of IDs to load.
  *
- * @return Entity
+ * @return InlineDevelLogs[]
  *  List of inline devel entries.
  */
 function inline_devel_logs_load_multiple($ids) {
@@ -90,12 +90,11 @@ function inline_devel_logs_menu() {
     'weight' => 2,
   );
 
-  $items['admin/structure/inline_devel_admin/logs/delete/%'] = array(
+  $items['admin/structure/inline_devel_admin/logs/delete/%inline_devel_logs'] = array(
     'title' => 'Delete log',
     'access arguments' => array('access devel information'),
-    'page callback' => 'inline_devel_logs_log_delete',
-    'page arguments' => array(5),
-    'weight' => 2,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('inline_devel_logs_log_delete', 5),
   );
 
   return $items;
@@ -160,13 +159,17 @@ function inline_devel_logs_form_devel_execute_form_alter(&$form, &$form_state) {
  * @param $code
  *  Optional; If not empty, the query will search for logs with the code.
  *
- * @return Entity[]
+ * @return InlineDevelLogs[]
  *  Array of inline devel logs items.
  */
 function inline_devel_logs_get_logs($code = '') {
+  global $user;
+
   $query = new entityFieldQuery();
 
-  $query->entityCondition('entity_type', 'inline_devel_logs');
+  $query
+    ->entityCondition('entity_type', 'inline_devel_logs')
+    ->propertyCondition('uid', $user->uid);
 
   if ($code) {
     $query->propertyCondition('code', $code);
@@ -207,4 +210,55 @@ function inline_devel_logs_log_redo($inline_devel_log) {
 
   // Go back to the devel.
   drupal_goto('devel/php');
+}
+
+/**
+ * Manage the logs.
+ */
+function inline_devel_logs_log_list() {
+  $header = array(
+    t('Code'),
+    t('Delete'),
+  );
+
+  $rows = array();
+
+  if ($logs = inline_devel_logs_get_logs()) {
+    foreach ($logs as $log) {
+      $rows[] = array($log->code, l('Delete', 'admin/structure/inline_devel_admin/logs/delete/' . $log->identifier()));
+    }
+
+  }
+  else {
+    $rows[] = array(array('data' => t('No entries were found'), 'colspan' => 2));
+  }
+
+  $output = theme('table', array('header' => $header, 'rows' => $rows));
+  return $output;
+}
+
+/**
+ * Delete the log entry.
+ */
+function inline_devel_logs_log_delete($form, &$form_state, InlineDevelLogs $inline_devel_log) {
+  $form_state['#entity'] = $inline_devel_log;
+
+  return confirm_form($form,
+    t('Are you sure you want to delete the entry?'),
+    'admin/structure/inline_devel_admin/logs',
+    t('Are you sure you would like to this entry? This could not be undone.'),
+    t('Delete'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Submit handler - delete the entry.
+ */
+function inline_devel_logs_log_delete_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/structure/inline_devel_admin/logs';
+  $inline_devel_log = $form_state['#entity'];
+  $inline_devel_log->delete();
+
+  drupal_set_message(t('The entry has deleted.'));
 }
