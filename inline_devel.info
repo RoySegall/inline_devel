@@ -3,8 +3,6 @@ description = Inline php editor.
 package = Development
 core = 7.x
 
-tags[] = developer
-
 ; Dependencies
 dependencies[] = entity
 dependencies[] = inline_devel_dummy_module

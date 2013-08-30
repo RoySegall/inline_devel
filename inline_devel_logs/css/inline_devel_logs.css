@@ -51,6 +51,7 @@
   height: 250px;
   overflow-x: hidden;
   background: #EBF4FA;
+  z-index: 1;
 }
 
 #history .code-wrappers {
@@ -74,6 +75,6 @@
 
 #history .inline_devel_log_row .code {
   float: left;
-    padding-bottom: 9px;
+   padding-bottom: 9px;
   padding-top: 9px;
 }

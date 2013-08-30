@@ -1,5 +1,9 @@
 name = Inline Devel logs
 description = Save your submitted code from your devel execute form.
 core = 7.x
-dependencies[] = message
+package = Development
+
+dependencies[] = devel
 dependencies[] = inline_devel
+
+files[] = includes/inline_devel_logs.entity.inc

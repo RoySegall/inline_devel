@@ -3,7 +3,6 @@ description = Admin ui for Inline Devel.
 package = Development
 core = 7.x
 
-tags[] = developer
 dependencies[] = inline_devel
 
 files[] = ../includes/inline_devel_tests.inc
