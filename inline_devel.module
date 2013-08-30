@@ -1,7 +1,7 @@
 <?php
 /**
  * @file
- * The file for the inline_devel module.
+ * The file for the Inline devel module.
  */
 
 /**
@@ -168,7 +168,7 @@ function inline_devel_get_classes($function, $class) {
   $i = 0;
   foreach ($methods as $method) {
     if ((strpos(strtolower($method), strtolower($function)) === 0) xor empty($function)) {
-      $arguments = _inline_deve_get_class_method_paramaters($class, $method, FALSE, TRUE);
+      $arguments = _inline_devel_get_class_method_parameters($class, $method, FALSE, TRUE);
 
       if (!empty($arguments)) {
         $arguments = implode(", ", $arguments);
@@ -659,7 +659,7 @@ function _inline_devel_get_function_arguments($function_name, $alert = FALSE, $d
 /**
  * Get the class methods parameters function.
  */
-function _inline_deve_get_class_method_paramaters($class_name, $method_name, $alert = FALSE, $dollar = FALSE) {
+function _inline_devel_get_class_method_parameters($class_name, $method_name, $alert = FALSE, $dollar = FALSE) {
   $method = new inlineDevelReflection($method_name, $class_name);
 
   return $method->dollarArguments;
