@@ -111,7 +111,7 @@ function inline_devel_menu() {
     'type' => MENU_CALLBACK,
   );
 
-  $items['devel/php/inline_devel/variable_suggestor'] = array(
+  $items['devel/php/inline_devel/variable_suggester'] = array(
     'page callback' => 'inline_devel_variables_list',
     'access arguments' => array('access devel information'),
     'type' => MENU_CALLBACK,
@@ -140,24 +140,52 @@ function inline_devel_php_functions($text) {
  * print out JSON format of available variables.
  */
 function inline_devel_variables_list($text) {
-  // Getting the cached variables list and bold the searched strings.
-  $list = array();
-
+  // All the variables values.
   $variables_value = variable_initialize();
+
+  // Build list of variables according to a custom logic.
   $variables_list = inline_devel_get_list_of_variables();
 
-  // Process.
+  // Getting the cached variables list and bold the searched strings.
+  if (!$list = _inline_devel_variable_list($text, $variables_value, $variables_list)) {
+    $variables_list = inline_devel_get_list_of_variables(TRUE);
+    $list = _inline_devel_variable_list($text, $variables_value, $variables_list);
+  }
+
+  drupal_json_output(array_unique($list));
+}
+
+/**
+ * Build an array of variables according to the user search.
+ *
+ * @param $text
+ *  The text the user searched in the variable suggester.
+ * @param $variables_value
+ *  All the variables values from the DB.
+ * @param $variables_list
+ *  A list of variables categorized by the modules who defined them:
+ *    - Bootstrap:  all the variables defined by the core modules(node, user)
+ *                  and variables which set outside of any module context.
+ *    - else: A list of the contributed modules(devel, inline devel) and the
+ *            variables they defined.
+ *
+ * @return array
+ *  Array of the variables which matches the search criteria.
+ */
+function _inline_devel_variable_list($text, $variables_value, $variables_list) {
+  $list = array();
+
   foreach ($variables_list as $module => $variables) {
     foreach ($variables as $variable) {
       if (strpos($variable, $text) === 0 || strpos($module, $text) === 0) {
-        $variable_value = !empty($variables_value[$variable]) ? $variables_value[$variable] : t('Emtpy');
+        $variable_value = !empty($variables_value[$variable]) ? $variables_value[$variable] : t('Empty');
         $variable_text =  $module . ": " . $variable . "(" . $variable_value .")";
         $list[$variable] = str_replace($text, "<b>" . $text . "</b>", $variable_text);
       }
     }
   }
 
-  drupal_json_output(array_unique($list));
+  return $list;
 }
 
 /**
@@ -211,8 +239,8 @@ function inline_devel_form_devel_execute_form_alter(&$form, $form_state) {
   // Variables auto complete.
   $form['execute']['variables'] = array(
     '#type' => 'textfield',
-    '#autocomplete_path' => 'devel/php/inline_devel/variable_suggestor',
-    '#suffix' => '<div id="variable_suggestor"></div>',
+    '#autocomplete_path' => 'devel/php/inline_devel/variable_suggester',
+    '#suffix' => '<div id="variable_suggester"></div>',
     '#weight' => 0,
     '#size' => 25,
   );
@@ -384,13 +412,13 @@ function inline_devel_get_list_of_hooks() {
  *
  * @return
  *  List of defined variables from files.
- *
- * @TODO: When a variable is updated - clear the variables cache.
  */
 function inline_devel_get_list_of_variables($reset = FALSE) {
-  if ($cache = cache_get('inline_devel_variable_list')) {
-    $variables_data = $cache->data;
-    return $variables_data;
+  if (!$reset) {
+    if ($cache = cache_get('inline_devel_variable_list')) {
+      $variables_data = $cache->data;
+      return $variables_data;
+    }
   }
 
   // Loop over the files.
