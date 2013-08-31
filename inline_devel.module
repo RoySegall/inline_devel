@@ -142,10 +142,12 @@ function inline_devel_php_functions($text) {
 function inline_devel_variables_list($text) {
   // Getting the cached variables list and bold the searched strings.
   $list = array();
-  $variables_value = array();
-  $variables_lists = inline_devel_get_list_of_variables($variables_value);
 
-  foreach ($variables_lists as $module => $variables) {
+  $variables_value = variable_initialize();
+  $variables_list = inline_devel_get_list_of_variables();
+
+  // Process.
+  foreach ($variables_list as $module => $variables) {
     foreach ($variables as $variable) {
       if (strpos($variable, $text) === 0 || strpos($module, $text) === 0) {
         $variable_value = !empty($variables_value[$variable]) ? $variables_value[$variable] : t('Emtpy');
@@ -376,58 +378,66 @@ function inline_devel_get_list_of_hooks() {
 /**
  * Get all defined variables from the files and their defined module.
  *
- * @param $variables
+ * @param $reset
+ *  Determine if we need to reset the cache of the variables list. Should be set
+ *  to true when the function don't return any results.
  *
  * @return
  *  List of defined variables from files.
  *
- * @TODO: Refactor.
+ * @TODO: When a variable is updated - clear the variables cache.
  */
-function inline_devel_get_list_of_variables(&$variables) {
+function inline_devel_get_list_of_variables($reset = FALSE) {
   if ($cache = cache_get('inline_devel_variable_list')) {
     $variables_data = $cache->data;
+    return $variables_data;
   }
-  else {
-    foreach (_inline_devel_get_files() as $file) {
-      // Start processing.
-      $content = @file_get_contents($file);
 
-      if (!$content) {
+  // Loop over the files.
+  foreach (_inline_devel_get_files() as $file) {
+    $content = @file_get_contents($file);
+
+    if (!$content) {
+      continue;
+    }
+
+    $variables = variable_initialize();
+    $variables_keys = array_keys($variables);
+
+    if (!preg_match_all("/variable_get\((.*?), (.*?)\);/ismx", $content, $arr)) {
+      continue;
+    }
+
+    foreach ($arr[1] as $hook) {
+      if (!$name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
         continue;
       }
 
-      $variables = variable_initialize();
-      $variables_keys = array_keys($variables);
-      if (preg_match_all("/variable_get\((.*?), (.*?)\);/ismx", $content, $arr)) {
-        foreach ($arr[1] as $hook) {
-          if ($name = reset(explode(")", str_replace(array("'", " ", ".", '"'), "", $hook)))) {
-            if (!in_array($name, $variables_keys)) {
-              continue;
-            }
-
-            if (strpos($file, 'includes/') === 0) {
-              $type = 'bootstrap';
-            }
-            else {
-              $file_keys = explode('/', $file);
-              if (strpos($file, 'modules/') === 0) {
-                $type = $file_keys[1];
-              }
-              else {
-                $type = $file_keys[3];
-              }
-            }
-
-            if (!empty($hooks[$type]) && in_array($name, $hooks[$type])) {
-              continue;
-            }
-            $variables_data[$type][] = $name;
-          }
-        }
+      if (!in_array($name, $variables_keys)) {
+        continue;
       }
+
+      if (strpos($file, 'includes/') === 0) {
+        $type = 'bootstrap';
+      }
+      else {
+        $file_keys = explode('/', $file);
+        $type = strpos($file, 'modules/') === 0 ? $file_keys[1] : $file_keys[3];
+      }
+
+      if (!empty($hooks[$type]) && in_array($name, $hooks[$type])) {
+        continue;
+      }
+
+      $variables_data[$type][] = $name;
     }
-    cache_set('inline_devel_variable_list', $variables_data, 'cache');
   }
+
+  // Adding more default variables into the bootstrap section.
+  $variables_data['bootstrap'] = array_merge(array_keys($variables), $variables_data['bootstrap']);
+
+  // Set the cache.
+  cache_set('inline_devel_variable_list', $variables_data, 'cache');
 
   return $variables_data;
 }
@@ -539,10 +549,11 @@ function _inline_devel_run_functions() {
     return;
   }
 
+  // TODO: Adding a setting which determine if we need to cache the results.
+  //        This could be done under the performance area.
   $items = inline_devel_load_multiple(array_keys($result['inline_devel']));
 
   // TODO: Consider shared functions?
-
   foreach ($items as $item) {
     if (empty($item->data)) {
       continue;
@@ -560,25 +571,27 @@ function _inline_devel_run_functions() {
  * Adding the shortcut for quick direction to devel form page.
  */
 function _inline_devel_overlay_devel() {
-  if (user_access('access devel information')) {
-    // Absolute url of your drupal site.
-    $url = url('', array('absolute' => TRUE));
-
-    // Current path.
-    $q = $_GET['q'];
-
-    // If you in admin page, take you back to front page and overlay above.
-    if (strpos(strtolower($_GET['q']), strtolower('admin/')) === 0) {
-      $q = '';
-    }
-
-    drupal_add_js(
-      array('baseURL' => $url, 'q' => $q,),
-      array('type' => 'setting',)
-    );
-
-    drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel_overlay.js');
+  if (!user_access('access devel information')) {
+    return;
   }
+
+  // Absolute url of your drupal site.
+  $url = url('', array('absolute' => TRUE));
+
+  // Current path.
+  $q = $_GET['q'];
+
+  // If you in admin page, take you back to front page and overlay above.
+  if (strpos(strtolower($_GET['q']), strtolower('admin/')) === 0) {
+    $q = '';
+  }
+
+  drupal_add_js(
+    array('baseURL' => $url, 'q' => $q,),
+    array('type' => 'setting',)
+  );
+
+  drupal_add_js(drupal_get_path('module', 'inline_devel') . '/js/inline_devel_overlay.js');
 }
 
 /**
